@@ -16,26 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-variable "helm_config" {
-  type        = any
-  default     = {}
-  description = "Ingress NGINX Helm Configuration"
+output "service_account_name" {
+  description = "Service account name for the add-on"
+  value       = local.service_account_name
 }
 
-variable "manage_via_gitops" {
-  type        = bool
-  default     = false
-  description = "Determines if the add-on should be managed via GitOps."
+output "zone_filter_ids" {
+  description = "Zone Filter Ids for the add-on"
+  value       = local.zone_filter_ids
 }
 
-variable "acm_domain" {
-  type        = string
-  default     = ""
-  description = "Domain used to lookup an ACM certificate used for TLS termination."
-}
-
-variable "hostname" {
-  type        = string
-  default     = ""
-  description = "Hostname for the cluster. Used for External DNS annotations."
+output "argocd_gitops_config" {
+  description = "Configuration used for managing the add-on with GitOps"
+  value       = var.manage_via_gitops ? local.argocd_gitops_config : null
 }

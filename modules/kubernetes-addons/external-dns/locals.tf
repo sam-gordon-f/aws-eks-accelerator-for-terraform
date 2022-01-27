@@ -1,22 +1,26 @@
 
 locals {
-  default_helm_values = [templatefile("${path.module}/values.yaml", {
-    hostname     = var.hostname
-    ssl_cert_arn = data.aws_acm_certificate.issued.arn
-  })]
+  namespace            = "external-dns"
+  service_account_name = "external-dns-sa"
+
+  zone_filter_arns = [data.aws_route53_zone.selected.arn]
+  zone_filter_ids  = [data.aws_route53_zone.selected.zone_id]
 
   default_helm_config = {
-    name                       = "ingress-nginx"
-    chart                      = "ingress-nginx"
-    repository                 = "https://kubernetes.github.io/ingress-nginx"
-    version                    = "4.0.6"
-    namespace                  = "kube-system"
+    name                       = "external-dns"
+    chart                      = "external-dns"
+    description                = "External DNS Helm Chart deployment configuration.s"
+    repository                 = "https://charts.bitnami.com/bitnami"
+    version                    = "5.1.3"
+    namespace                  = local.namespace
     timeout                    = "1200"
-    create_namespace           = false
+    create_namespace           = true
     values                     = local.default_helm_values
     set                        = []
     set_sensitive              = null
-    lint                       = false
+    lint                       = true
+    wait                       = true
+    wait_for_jobs              = false
     verify                     = false
     keyring                    = ""
     repository_key_file        = ""
@@ -35,11 +39,8 @@ locals {
     skip_crds                  = false
     render_subchart_notes      = true
     disable_openapi_validation = false
-    wait                       = true
-    wait_for_jobs              = false
     dependency_update          = false
     replace                    = false
-    description                = "The NGINX HelmChart Ingress Controller deployment configuration"
     postrender                 = ""
   }
 
@@ -48,9 +49,15 @@ locals {
     var.helm_config
   )
 
+  default_helm_values = [templatefile("${path.module}/values.yaml", {
+    aws_region           = data.aws_region.current.name
+    zone_filter_ids      = jsonencode(local.zone_filter_ids)
+    service_account_name = local.service_account_name
+  })]
+
   argocd_gitops_config = {
-    enable     = true
-    hostname   = var.hostname
-    sslCertArn = data.aws_acm_certificate.issued.arn
+    enable            = true
+    zoneFilterIds     = jsonencode(local.zone_filter_ids)
+    serviceAccontName = local.service_account_name
   }
 }

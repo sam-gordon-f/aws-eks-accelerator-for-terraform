@@ -3,6 +3,24 @@ variable "eks_cluster_id" {
   type        = string
 }
 
+variable "cluster_domain" {
+  description = "EKS Cluster Id"
+  default     = ""
+  type        = string
+}
+
+variable "cluster_subdomain" {
+  description = "EKS Cluster Id"
+  default     = ""
+  type        = string
+}
+
+variable "acm_domain" {
+  description = "EKS Cluster Id"
+  default     = ""
+  type        = string
+}
+
 variable "eks_worker_security_group_id" {
   description = "EKS Worker Security group Id created by EKS module"
   default     = ""
@@ -385,4 +403,23 @@ variable "yunikorn_helm_config" {
   type        = any
   default     = {}
   description = "YuniKorn K8s scheduler Helm Chart config"
+}
+
+#-----------External DNS ADDON-------------
+variable "enable_external_dns" {
+  type        = bool
+  default     = false
+  description = "External DNS add-on."
+}
+
+variable "external_dns_helm_config" {
+  type        = any
+  default     = {}
+  description = "External DNS Helm Chart config"
+}
+
+variable "external_dns_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts"
+  default     = []
 }
