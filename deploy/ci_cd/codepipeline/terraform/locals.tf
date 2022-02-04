@@ -4,7 +4,7 @@ locals {
             name = "s3"
             provider         = "S3"
             configuration = {
-                S3Bucket    = var.codepipeline_source_type == "S3" ? aws_s3_bucket.source_cluster_s3[0].id : null 
+                S3Bucket    = var.codepipeline.source.type == "S3" ? aws_s3_bucket.source_cluster_s3[0].id : null 
                 S3ObjectKey = "deployment.zip" 
             }   
         },
@@ -13,25 +13,25 @@ locals {
             provider         = "CodeCommit"
             configuration = {
                 RepositoryName = var.environment
-                BranchName = var.codepipeline_source_repo_branch_name
+                BranchName = var.codepipeline.source.repo.branch
             }
         },
         "GitHub" = {
             name = "github"
             provider         = "CodeStarSourceConnection"
             configuration = {
-                ConnectionArn    = var.codepipeline_source_type == "GitHub" ? aws_codestarconnections_connection.source_cluster_github[0].id : null                 
-                FullRepositoryId = var.codepipeline_source_repo_path
-                BranchName       = var.codepipeline_source_repo_branch_name
+                ConnectionArn    = var.codepipeline.source.type == "GitHub" ? aws_codestarconnections_connection.source_cluster_github[0].id : null                 
+                FullRepositoryId = format("%s/%s", var.codepipeline.source.repo.project, var.codepipeline.source.repo.name)
+                BranchName       = var.codepipeline.source.repo.branch
             }
         },
         "GitHubEnterpriseServer" = {
             name = "github-enterprise"
             provider         = "CodeStarSourceConnection"
             configuration = {
-                ConnectionArn    = var.codepipeline_source_type == "GitHubEnterpriseServer" ? aws_codestarconnections_connection.source_cluster_github_enterprise_server[0].id : null
-                FullRepositoryId = var.codepipeline_source_repo_path
-                BranchName       = var.codepipeline_source_repo_branch_name
+                ConnectionArn    = var.codepipeline.source.type == "GitHubEnterpriseServer" ? aws_codestarconnections_connection.source_cluster_github_enterprise_server[0].id : null
+                FullRepositoryId = format("%s/%s", var.codepipeline.source.repo.project, var.codepipeline.source.repo.name)
+                BranchName       = var.codepipeline.source.repo.branch
             }
         },
        
@@ -39,11 +39,11 @@ locals {
             name = "bitbucket"
             provider         = "CodeStarSourceConnection"
             configuration = {
-                ConnectionArn    = var.codepipeline_source_type == "Bitbucket" ? aws_codestarconnections_connection.source_cluster_bitbucket[0].id : null
-                FullRepositoryId = var.codepipeline_source_repo_path
-                BranchName       = var.codepipeline_source_repo_branch_name
+                ConnectionArn    = var.codepipeline.source.type == "Bitbucket" ? aws_codestarconnections_connection.source_cluster_bitbucket[0].id : null
+                FullRepositoryId = format("%s/%s", var.codepipeline.source.repo.project, var.codepipeline.source.repo.name)
+                BranchName       = var.codepipeline.source.repo.branch
             }
         }
     }
-    codepipeline_source_configuration = lookup(local.codepipeline_source_configuration_map, var.codepipeline_source_type, {})
+    codepipeline_source_configuration = lookup(local.codepipeline_source_configuration_map, var.codepipeline.source.type, {})
 }

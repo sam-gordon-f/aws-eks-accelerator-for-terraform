@@ -3,7 +3,7 @@
 ####
 
 resource "aws_s3_bucket" "source_cluster_s3" {
-  count = var.codepipeline_source_type == "S3" ? 1 : 0
+  count = var.codepipeline.source.type == "S3" ? 1 : 0
 
   bucket = format("%s-%s-codepipeline-source-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
   acl  = "private"
@@ -21,7 +21,7 @@ resource "aws_s3_bucket" "source_cluster_s3" {
 ####
 
 resource "aws_codestarconnections_connection" "source_cluster_bitbucket" {
-  count = var.codepipeline_source_type == "Bitbucket" ? 1 : 0
+  count = var.codepipeline.source.type == "Bitbucket" ? 1 : 0
 
   name          = var.environment
   provider_type = "Bitbucket"
@@ -32,14 +32,14 @@ resource "aws_codestarconnections_connection" "source_cluster_bitbucket" {
 ####
 
 resource "aws_codestarconnections_connection" "source_cluster_github" {
-  count = var.codepipeline_source_type == "GitHub" ? 1 : 0
+  count = var.codepipeline.source.type == "GitHub" ? 1 : 0
 
   name          = var.environment
   provider_type = "GitHub"
 }
 
 resource "aws_codepipeline_webhook" "codepipeline_webhook_github" {
-  count = var.codepipeline_source_type == "GitHub" ? 1 : 0
+  count = var.codepipeline.source.type == "GitHub" ? 1 : 0
 
   name            = var.environment
   authentication  = "GITHUB_HMAC"
@@ -47,7 +47,7 @@ resource "aws_codepipeline_webhook" "codepipeline_webhook_github" {
   target_pipeline = aws_codepipeline.this.name
 
   authentication_configuration {
-    secret_token = var.github_webhook_secret
+    secret_token = var.github.webhook_secret
   }
   filter {
     json_path    = "$.ref"
@@ -56,7 +56,7 @@ resource "aws_codepipeline_webhook" "codepipeline_webhook_github" {
 }
 
 # resource "github_repository_webhook" "github_webhook" {
-#   count = var.codepipeline_source_type == "GitHub" ? 1 : 0
+#   count = var.codepipeline.source.type == "GitHub" ? 1 : 0
 
 #   repository = var.codepipeline_source_repo_name
 #   configuration {
@@ -73,7 +73,7 @@ resource "aws_codepipeline_webhook" "codepipeline_webhook_github" {
 ####
 
 resource "aws_codestarconnections_connection" "source_cluster_github_enterprise_server" {
-  count = var.codepipeline_source_type == "GitHubEnterpriseServer" ? 1 : 0
+  count = var.codepipeline.source.type == "GitHubEnterpriseServer" ? 1 : 0
 
   name          = var.environment
   provider_type = "GitHubEnterpriseServer"
@@ -215,7 +215,7 @@ resource "aws_iam_role" "codebuild" {
 resource "aws_security_group" "codebuild" {
   name        = format("codebuild-%s", var.environment)
   description = "Allow codebuild"
-  vpc_id      = var.codebuild_project_ec2_vpc_id
+  vpc_id      = var.codebuild.vpc_id
 
   ingress {
     from_port   = 443
@@ -266,12 +266,12 @@ resource "aws_codebuild_project" "test_checkov" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -288,8 +288,8 @@ resource "aws_codebuild_project" "test_checkov" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -330,12 +330,12 @@ resource "aws_codebuild_project" "test_tfsec" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -352,8 +352,8 @@ resource "aws_codebuild_project" "test_tfsec" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -394,12 +394,12 @@ resource "aws_codebuild_project" "test_tflint" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -416,8 +416,8 @@ resource "aws_codebuild_project" "test_tflint" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -448,12 +448,12 @@ resource "aws_codebuild_project" "test_terrascan" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -470,8 +470,8 @@ resource "aws_codebuild_project" "test_terrascan" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -512,12 +512,12 @@ resource "aws_codebuild_project" "test_conftest" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -534,8 +534,8 @@ resource "aws_codebuild_project" "test_conftest" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -576,12 +576,12 @@ resource "aws_codebuild_project" "plan" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -598,8 +598,8 @@ resource "aws_codebuild_project" "plan" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -640,12 +640,12 @@ resource "aws_codebuild_project" "apply" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -662,8 +662,8 @@ resource "aws_codebuild_project" "apply" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -704,12 +704,12 @@ resource "aws_codebuild_project" "destroy" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.codepipeline_source_terraform_path
+      value = var.terraform.project_path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.codepipeline_source_terraform_variable_path
+      value = var.terraform.variable_path
     }
   }
 
@@ -726,8 +726,8 @@ resource "aws_codebuild_project" "destroy" {
   }
 
   vpc_config {
-    vpc_id = var.codebuild_project_ec2_vpc_id
-    subnets = var.codebuild_project_list_ec2_subnet_id
+    vpc_id = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
     ]
@@ -781,7 +781,7 @@ resource "aws_codepipeline" "this" {
   }
 
   dynamic "stage" {
-    for_each = var.codepipeline_include_test_stage == true ? [1] : []
+    for_each = var.codepipeline.include_test_stage == true ? [1] : []
     content {
       name = "Test"
       action {
@@ -866,7 +866,7 @@ resource "aws_codepipeline" "this" {
     name = "Approve"
 
     dynamic "action" {
-      for_each = var.codepipeline_include_test_stage == true ? [1] : []
+      for_each = var.codepipeline.include_test_stage == true ? [1] : []
       content {
         name     = "test_frameworks"
         category = "Approval"
@@ -941,7 +941,7 @@ resource "aws_codepipeline" "this" {
   }
 
   dynamic "stage" {
-    for_each = var.codepipeline_include_destroy_stage == true ? [1] : []
+    for_each = var.codepipeline.include_destroy_stage == true ? [1] : []
     content {
       name = "Destroy"
       action {
