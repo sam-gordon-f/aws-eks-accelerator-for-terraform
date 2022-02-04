@@ -1,0 +1,39 @@
+version: 0.2
+env:
+  exported-variables: 
+    - "TEST_ERRORS" 
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+      - mkdir conftest_0.25.0_Linux_x86_64
+      - wget https://github.com/open-policy-agent/conftest/releases/download/v0.25.0/conftest_0.25.0_Linux_x86_64.tar.gz
+      - tar xzf conftest_0.25.0_Linux_x86_64.tar.gz -C conftest_0.25.0_Linux_x86_64
+      - rm conftest_0.25.0_Linux_x86_64.tar.gz
+      - mv conftest_0.25.0_Linux_x86_64/conftest /usr/local/bin
+  build:
+    commands:
+      - echo "Build phase"
+       # keep a pointer to project root
+      - export PROJECT_ROOT=$(pwd)
+        # report setup
+      - mkdir $PROJECT_ROOT/reports
+      - touch $PROJECT_ROOT/reports/conftest.xml
+      - touch $PROJECT_ROOT/reports/conftest.json
+      - ls -la
+      - cat $TF_PATH/tf.json
+        # create test report(s)
+      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/conftest_policies --output=junit > $PROJECT_ROOT/reports/conftest.xml; TEST_STATUS=$?
+      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/conftest_policies --output=json > $PROJECT_ROOT/reports/conftest.json; TEST_STATUS_IGNORE=$?
+        # set codepipeine errors
+      - export TEST_ERRORS=`jq '.[0].failures | length // 0' $PROJECT_ROOT/reports/conftest.json`
+        # display test results
+      - echo "conftest, $TEST_STATUS"
+      - cat $PROJECT_ROOT/reports/conftest.xml
+  post_build:
+    commands:
+      - echo "Post Build phase"
+reports: 
+  conftest:
+    files:
+      - "reports/conftest.xml"

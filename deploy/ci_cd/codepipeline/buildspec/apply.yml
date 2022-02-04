@@ -1,0 +1,21 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+        # boto3
+      - pip install boto3
+        # terraform
+      - wget https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip
+      - unzip -o terraform_1.0.2_linux_amd64.zip -d /bin
+      - rm terraform_1.0.2_linux_amd64.zip
+  build:
+    commands:
+      - echo "Build phase"
+       # keep a pointer to project root
+      - export PROJECT_ROOT=$(pwd)
+      - cd $TF_PATH
+      - terraform apply -auto-approve tf.plan     
+  post_build:
+    commands:
+      - echo "Post Build phase"

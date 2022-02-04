@@ -1,0 +1,39 @@
+version: 0.2
+env:
+  exported-variables: 
+    - "TEST_ERRORS" 
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+        # boto3
+      - pip install boto3
+        # terraform
+      - wget https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip
+      - unzip -o terraform_1.0.2_linux_amd64.zip -d /bin
+      - rm terraform_1.0.2_linux_amd64.zip
+        # tflint
+      - curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+  build:
+    commands:
+      - echo "Build phase"
+       # keep a pointer to project root
+      - export PROJECT_ROOT=$(pwd)
+        # report setup
+      - mkdir $PROJECT_ROOT/reports
+      - touch $PROJECT_ROOT/reports/tflint.xml
+        # change to directory where tf resides
+      - cd $TF_PATH
+      - tflint --format junit > $PROJECT_ROOT/reports/tflint.xml; TEST_STATUS=$?
+        # set codepipeine errors
+      - export TEST_ERRORS=`tflint --format json | jq -r '.errors | length'`
+      - cd $PROJECT_ROOT
+      - echo "tfsec, $TEST_STATUS"
+      - cat $PROJECT_ROOT/reports/tflint.xml
+  post_build:
+    commands:
+      - echo "Post Build phase"
+reports: 
+  tflint:
+    files:
+      - "reports/tflint.xml"

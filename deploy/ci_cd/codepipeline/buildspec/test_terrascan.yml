@@ -1,0 +1,33 @@
+version: 0.2
+env:
+  exported-variables: 
+    - "TEST_ERRORS" 
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+      - wget https://github.com/accurics/terrascan/releases/download/v1.13.0/terrascan_1.13.0_Linux_x86_64.tar.gz
+      - tar -xf terrascan_1.13.0_Linux_x86_64.tar.gz terrascan && rm terrascan_1.13.0_Linux_x86_64.tar.gz
+      - install terrascan /usr/local/bin && rm terrascan
+  build:
+    commands:
+      - echo "Build phase"
+       # keep a pointer to project root
+      - export PROJECT_ROOT=$(pwd)
+        # report setup
+      - mkdir $PROJECT_ROOT/reports
+      - touch $PROJECT_ROOT/reports/terrscan.json
+      - terrascan init
+      - terrascan scan -o junit-xml -d $TF_PATH > $PROJECT_ROOT/reports/terrscan.xml; TEST_STATUS=$?
+        # set codepipeine errors
+      - export TEST_ERRORS=`terrascan scan -o json -d $TF_PATH | jq '.results.scan_summary.violated_policies'`
+        # display test results
+      - echo "terrscan, $TEST_STATUS"
+      - cat $PROJECT_ROOT/reports/terrscan.xml
+  post_build:
+    commands:
+      - echo "Post Build phase"
+reports: 
+  terrascan:
+    files:
+      - "reports/terrscan.xml"

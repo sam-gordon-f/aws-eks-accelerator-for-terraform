@@ -1,0 +1,39 @@
+version: 0.2
+env:
+  exported-variables: 
+    - "TEST_ERRORS" 
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+        # tfsec
+      - curl -Lso tfsec https://github.com/tfsec/tfsec/releases/download/v0.63.1/tfsec-linux-amd64
+      - chmod +x tfsec && mv tfsec /usr/local/bin/
+  build:
+    commands:
+      - echo "Build phase"
+       # keep a pointer to project root
+      - export PROJECT_ROOT=$(pwd)
+        # report setup
+      - mkdir $PROJECT_ROOT/reports
+      - touch $PROJECT_ROOT/reports/tfsec.xml
+      - touch $PROJECT_ROOT/reports/tfsec.json
+        # change to directory where tf resides
+      - cd $TF_PATH
+      - tfsec . --format junit --include-passed > $PROJECT_ROOT/reports/tfsec.xml; TEST_STATUS=$?
+      - tfsec . --format json --include-passed > $PROJECT_ROOT/reports/tfsec.json; TEST_STATUS_IGNORE=$?
+        # set codepipeine errors
+      - export TEST_ERRORS=`jq '[.results[] | select(.status == "failed")] | length' $PROJECT_ROOT/reports/tfsec.json`
+        # print details inline
+      - echo "tfsec, $TEST_STATUS"
+      - echo "xml output"
+      - cat $PROJECT_ROOT/reports/tfsec.xml
+      - echo "json output"
+      - cat $PROJECT_ROOT/reports/tfsec.json
+  post_build:
+    commands:
+      - echo "Post Build phase"
+reports: 
+  tfsec:
+    files:
+      - "reports/tfsec.xml"

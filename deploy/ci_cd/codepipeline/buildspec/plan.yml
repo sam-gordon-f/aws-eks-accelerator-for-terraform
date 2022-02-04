@@ -1,0 +1,41 @@
+version: 0.2
+env:
+  exported-variables: 
+    - CODEBUILD_BUILD_ID
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+      - pip install boto3
+      - wget https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip
+      - unzip -o terraform_1.0.2_linux_amd64.zip -d /bin
+      - rm terraform_1.0.2_linux_amd64.zip
+  build:
+    commands:
+      - echo "Build phase"
+      - export PROJECT_ROOT=$(pwd)
+      - cd $TF_PATH
+      - echo "Prepare dynamic terraform provider info"
+      - echo "terraform {" >> state.tf
+      - echo "   backend \"s3\" {" >> state.tf
+      - echo "   bucket = \"${TF_STATE_S3_BUCKET_NAME}\"" >> state.tf
+      - echo "   key    = \"${TF_STATE_S3_BUCKET_KEY}\"" >> state.tf
+      - echo "   region = \"${AWS_REGION}\"" >> state.tf
+      - echo "  }" >> state.tf
+      - echo "}" >> state.tf
+      - terraform init
+      - |
+        if [ -z "$TF_VARIABLE_PATH" ]; then
+          terraform plan -out tf.plan
+        else
+          terraform plan -out tf.plan -var-file $PROJECT_ROOT/$TF_VARIABLE_PATH
+        fi
+      - terraform show -json tf.plan > tf.json 
+  post_build:
+    commands:
+      - echo "Post Build phase"
+artifacts:
+  files:
+    - '**/*'
+  name: build_terraform_plan_output
+  base-directory: $PROJECT_ROOT
