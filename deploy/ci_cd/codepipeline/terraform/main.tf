@@ -6,8 +6,8 @@ resource "aws_s3_bucket" "source_cluster_s3" {
   count = var.codepipeline.source.type == "S3" ? 1 : 0
 
   bucket = format("%s-%s-codepipeline-source-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
-  acl  = "private"
-  tags = var.tags
+  acl    = "private"
+  tags   = var.tags
   policy = templatefile("files/s3_bucket_policy_codepipeline_pipeline.tpl", {
     resource_arn = format("arn:aws:s3:::%s-%s-codepipeline-source-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
   })
@@ -84,8 +84,10 @@ resource "aws_codestarconnections_connection" "source_cluster_github_enterprise_
 ####
 
 resource "aws_codecommit_repository" "source_cluster_codecommit" {
+  count = var.codepipeline.source.type == "CodeCommit" ? 1 : 0
+
   repository_name = var.environment
-  default_branch = "master"
+  default_branch  = "master"
 }
 
 ####
@@ -93,7 +95,7 @@ resource "aws_codecommit_repository" "source_cluster_codecommit" {
 ####
 
 resource "aws_iam_role" "post-codepipeline-lambda" {
-  name = format("lambda-%s", var.environment)
+  count = var.codepipeline.include_lambda_stage == true ? 1 : 0
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -112,25 +114,26 @@ resource "aws_iam_role" "post-codepipeline-lambda" {
     name   = "lambda"
     policy = file("${path.module}/files/iam_policy_lambda_function_post_codepipeline.json")
   }
+  name = format("lambda-%s", var.environment)
   tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "post-codepipeline-lambda" {
+  count = var.codepipeline.include_lambda_stage == true ? 1 : 0
+
   name              = "/aws/lambda/${var.environment}"
   retention_in_days = 14
 }
 
 resource "aws_lambda_function" "post-codepipeline-lambda" {
-  filename      = data.archive_file.post-codepipeline-lambda.output_path
-  function_name = format("%s-codepipeline-post-apply", var.environment)
-  role          = aws_iam_role.post-codepipeline-lambda.arn
-  handler       = "index.handler"
+  count = var.codepipeline.include_lambda_stage == true ? 1 : 0
 
-  # The filebase64sha256() function is available in Terraform 0.11.12 and later
-  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
-  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
-  source_code_hash = "${data.archive_file.post-codepipeline-lambda.output_base64sha256}"
-  runtime = "python3.8"
+  filename         = data.archive_file.post-codepipeline-lambda.output_path
+  function_name    = format("%s-codepipeline-post-apply", var.environment)
+  handler          = "index.handler"
+  role             = aws_iam_role.post-codepipeline-lambda[0].arn
+  runtime          = "python3.8"
+  source_code_hash = data.archive_file.post-codepipeline-lambda.output_base64sha256
 }
 
 ####
@@ -139,16 +142,16 @@ resource "aws_lambda_function" "post-codepipeline-lambda" {
 
 resource "aws_s3_bucket" "artefacts" {
   bucket = format("%s-%s-codepipeline-artefacts-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
-  acl  = "private"
+  acl    = "private"
   policy = templatefile("files/s3_bucket_policy_codepipeline_pipeline.tpl", {
     resource_arn = format("arn:aws:s3:::%s-%s-codepipeline-artefacts-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
-  })  
+  })
   tags = var.tags
 }
 
 resource "aws_s3_bucket" "logs" {
   bucket = format("%s-%s-codepipeline-logs-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
-  acl  = "private"
+  acl    = "private"
   policy = templatefile("files/s3_bucket_policy_codepipeline_pipeline.tpl", {
     resource_arn = format("arn:aws:s3:::%s-%s-codepipeline-logs-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
   })
@@ -157,8 +160,8 @@ resource "aws_s3_bucket" "logs" {
 
 resource "aws_s3_bucket" "tf_state" {
   bucket = format("%s-%s-codepipeline-tf-state-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
-  acl  = "private"
-  tags = var.tags
+  acl    = "private"
+  tags   = var.tags
   versioning {
     enabled = true
   }
@@ -283,12 +286,12 @@ resource "aws_codebuild_project" "test_checkov" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/test_checkov.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -322,7 +325,7 @@ resource "aws_codebuild_project" "test_tfsec" {
       name  = "TF_STATE_S3_BUCKET_KEY"
       value = "terraform.tfstate"
     }
-    
+
     environment_variable {
       name  = "AWS_REGION"
       value = data.aws_region.current.name
@@ -347,12 +350,12 @@ resource "aws_codebuild_project" "test_tfsec" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/test_tfsec.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -411,12 +414,12 @@ resource "aws_codebuild_project" "test_tflint" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/test_tflint.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -465,12 +468,12 @@ resource "aws_codebuild_project" "test_terrascan" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/test_terrascan.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -529,12 +532,12 @@ resource "aws_codebuild_project" "test_conftest" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/test_conftest.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -593,12 +596,12 @@ resource "aws_codebuild_project" "plan" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/plan.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -657,12 +660,12 @@ resource "aws_codebuild_project" "apply" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/apply.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -721,12 +724,12 @@ resource "aws_codebuild_project" "destroy" {
   }
 
   source {
-    type = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("../buildspec/destroy.yml")
   }
 
   vpc_config {
-    vpc_id = var.codebuild.vpc_id
+    vpc_id  = var.codebuild.vpc_id
     subnets = var.codebuild.subnet_ids
     security_group_ids = [
       aws_security_group.codebuild.id
@@ -761,20 +764,20 @@ resource "aws_codepipeline" "this" {
   stage {
     name = "Plan"
     action {
-      name             = "terraform_plan"
-      category         = "Build"
-      owner            = "AWS"
-      provider         = "CodeBuild"
-      input_artifacts  = [
+      name     = "terraform_plan"
+      category = "Build"
+      owner    = "AWS"
+      provider = "CodeBuild"
+      input_artifacts = [
         "source_output"
       ]
       output_artifacts = [
         "build_terraform_plan_output"
       ]
-      version          = "1"
+      version = "1"
       configuration = {
         PrimarySource = "source_output"
-        ProjectName = aws_codebuild_project.plan.name
+        ProjectName   = aws_codebuild_project.plan.name
       }
       namespace = "build_terraform_plan"
     }
@@ -785,77 +788,77 @@ resource "aws_codepipeline" "this" {
     content {
       name = "Test"
       action {
-        name             = "checkov"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "checkov"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "build_terraform_plan_output"
         ]
-        version          = "1"
+        version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName = aws_codebuild_project.test_checkov.name
+          ProjectName   = aws_codebuild_project.test_checkov.name
         }
         namespace = "build_test_checkov"
       }
       action {
-        name             = "tfsec"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "tfsec"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "build_terraform_plan_output"
         ]
-        version          = "1"
+        version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName = aws_codebuild_project.test_tfsec.name
+          ProjectName   = aws_codebuild_project.test_tfsec.name
         }
         namespace = "build_test_tfsec"
       }
       action {
-        name             = "tflint"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "tflint"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "build_terraform_plan_output"
         ]
-        version          = "1"
+        version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName = aws_codebuild_project.test_tflint.name
+          ProjectName   = aws_codebuild_project.test_tflint.name
         }
         namespace = "build_test_tflint"
       }
       action {
-        name             = "terrascan"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "terrascan"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "build_terraform_plan_output"
         ]
-        version          = "1"
+        version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName = aws_codebuild_project.test_terrascan.name
+          ProjectName   = aws_codebuild_project.test_terrascan.name
         }
         namespace = "build_test_terrascan"
       }
       action {
-        name             = "conftest"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "conftest"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "build_terraform_plan_output"
         ]
-        version          = "1"
+        version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName = aws_codebuild_project.test_conftest.name
+          ProjectName   = aws_codebuild_project.test_conftest.name
         }
         namespace = "build_test_conftest"
       }
@@ -908,34 +911,36 @@ resource "aws_codepipeline" "this" {
   stage {
     name = "Apply"
     action {
-      name             = "terraform_apply"
-      category         = "Build"
-      owner            = "AWS"
-      provider         = "CodeBuild"
-      input_artifacts  = [
+      name     = "terraform_apply"
+      category = "Build"
+      owner    = "AWS"
+      provider = "CodeBuild"
+      input_artifacts = [
         "build_terraform_plan_output"
       ]
-      version          = "1"
+      version = "1"
       configuration = {
         PrimarySource = "build_terraform_plan_output"
-        ProjectName = aws_codebuild_project.apply.name
+        ProjectName   = aws_codebuild_project.apply.name
       }
       namespace = "build_terraform_apply"
     }
   }
 
-  stage {
-    name = "Post_Apply"
-    action {
-      name             = "lambda"
-      category         = "Invoke"
-      owner            = "AWS"
-      provider         = "Lambda"
-      version          = "1"
+  dynamic "stage" {
+    for_each = var.codepipeline.include_lambda_stage == true ? [1] : []
+    content {
+      name = "Post_Apply"
+      action {
+        name     = "lambda"
+        category = "Invoke"
+        owner    = "AWS"
+        provider = "Lambda"
+        version  = "1"
 
-      configuration = {
-        FunctionName = aws_lambda_function.post-codepipeline-lambda.function_name
-        # UserParameters = {}
+        configuration = {
+          FunctionName = aws_lambda_function.post-codepipeline-lambda[0].function_name
+        }
       }
     }
   }
@@ -945,18 +950,18 @@ resource "aws_codepipeline" "this" {
     content {
       name = "Destroy"
       action {
-        name             = "terraform_destroy"
-        category         = "Build"
-        owner            = "AWS"
-        provider         = "CodeBuild"
-        input_artifacts  = [
+        name     = "terraform_destroy"
+        category = "Build"
+        owner    = "AWS"
+        provider = "CodeBuild"
+        input_artifacts = [
           "source_output"
         ]
         output_artifacts = ["destroy_output"]
         version          = "1"
         configuration = {
           PrimarySource = "source_output"
-          ProjectName = aws_codebuild_project.destroy.name
+          ProjectName   = aws_codebuild_project.destroy.name
         }
         namespace = "build_terraform_destroy"
       }

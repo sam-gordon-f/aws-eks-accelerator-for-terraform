@@ -11,15 +11,16 @@ codepipeline = {
   source = {
     type = "S3"
     repo = {
-      branch = "",
+      branch  = "",
       project = "",
-      name = ""
+      name    = ""
     }
   },
   include_destroy_stage = false
-  include_test_stage = true
+  include_lambda_stage = true
+  include_test_stage    = true
 }
 terraform = {
-  project_path = "examples/eks-cluster-basic-via-codepipeline",
-  variable_path = "examples/eks-cluster-basic-via-codepipeline/__variables/variables.tfvars"
+  project_path  = "examples/eks-cluster-proserve",
+  variable_path = "examples/eks-cluster-proserve/__variables/variables.tfvars"
 }
