@@ -12,7 +12,7 @@ locals {
       name     = "codecommit"
       provider = "CodeCommit"
       configuration = {
-        RepositoryName = var.environment
+        RepositoryName = var.codepipeline.source.repo.name
         BranchName     = var.codepipeline.source.repo.branch
       }
     },

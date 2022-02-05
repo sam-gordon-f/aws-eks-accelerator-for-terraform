@@ -86,7 +86,7 @@ resource "aws_codestarconnections_connection" "source_cluster_github_enterprise_
 resource "aws_codecommit_repository" "source_cluster_codecommit" {
   count = var.codepipeline.source.type == "CodeCommit" ? 1 : 0
 
-  repository_name = var.environment
+  repository_name = var.codepipeline.source.repo.name
   default_branch  = "master"
 }
 
@@ -165,6 +165,40 @@ resource "aws_s3_bucket" "tf_state" {
   versioning {
     enabled = true
   }
+}
+
+resource "aws_s3_bucket_policy" "tf_state" {
+  count = var.terraform.deploy_role != "" ? 1 : 0
+
+  bucket = aws_s3_bucket.tf_state.id
+  policy = jsonencode({ 
+    Version = "2012-10-17"
+    Statement = [
+      { 
+        Effect = "Allow"
+        Principal = {
+          AWS = [
+            var.terraform.deploy_role
+          ]
+        }
+        Action = "s3:ListBucket"
+        Resource = aws_s3_bucket.tf_state.arn
+      }, {
+        Effect = "Allow" 
+        Principal = {
+          AWS = [
+            var.terraform.deploy_role
+          ]
+        }       
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        Resource = format("%s/*", aws_s3_bucket.tf_state.arn)
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role" "codepipeline" {
@@ -563,6 +597,16 @@ resource "aws_codebuild_project" "plan" {
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
+      name  = "AWS_REGION"
+      value = data.aws_region.current.name
+    }
+    
+    environment_variable {
+      name  = "TF_DEPLOY_ROLE"
+      value = var.terraform.deploy_role
+    }
+
+    environment_variable {
       name  = "TF_STATE_S3_BUCKET_NAME"
       value = aws_s3_bucket.tf_state.id
     }
@@ -570,11 +614,6 @@ resource "aws_codebuild_project" "plan" {
     environment_variable {
       name  = "TF_STATE_S3_BUCKET_KEY"
       value = "terraform.tfstate"
-    }
-
-    environment_variable {
-      name  = "AWS_REGION"
-      value = data.aws_region.current.name
     }
 
     environment_variable {
@@ -627,6 +666,16 @@ resource "aws_codebuild_project" "apply" {
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
+      name  = "AWS_REGION"
+      value = data.aws_region.current.name
+    }
+    
+    environment_variable {
+      name  = "TF_DEPLOY_ROLE"
+      value = var.terraform.deploy_role
+    }
+
+    environment_variable {
       name  = "TF_STATE_S3_BUCKET_NAME"
       value = aws_s3_bucket.tf_state.id
     }
@@ -634,11 +683,6 @@ resource "aws_codebuild_project" "apply" {
     environment_variable {
       name  = "TF_STATE_S3_BUCKET_KEY"
       value = "terraform.tfstate"
-    }
-
-    environment_variable {
-      name  = "AWS_REGION"
-      value = data.aws_region.current.name
     }
 
     environment_variable {
@@ -691,6 +735,16 @@ resource "aws_codebuild_project" "destroy" {
     image_pull_credentials_type = "CODEBUILD"
 
     environment_variable {
+      name  = "AWS_REGION"
+      value = data.aws_region.current.name
+    }
+    
+    environment_variable {
+      name  = "TF_DEPLOY_ROLE"
+      value = var.terraform.deploy_role
+    }
+
+    environment_variable {
       name  = "TF_STATE_S3_BUCKET_NAME"
       value = aws_s3_bucket.tf_state.id
     }
@@ -698,11 +752,6 @@ resource "aws_codebuild_project" "destroy" {
     environment_variable {
       name  = "TF_STATE_S3_BUCKET_KEY"
       value = "terraform.tfstate"
-    }
-
-    environment_variable {
-      name  = "AWS_REGION"
-      value = data.aws_region.current.name
     }
 
     environment_variable {

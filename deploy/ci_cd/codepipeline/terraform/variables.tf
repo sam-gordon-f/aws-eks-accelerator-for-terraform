@@ -1,18 +1,3 @@
-variable "environment" {
-  type        = string
-  description = "Defines labels for your terraform resources to help discover/differentiate"
-}
-
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "Tags for each resource required by the codepipeling solution"
-}
-
-####
-# codepipeline/build required variables
-####
-
 variable "codepipeline" {
   type = object({
     source = object({
@@ -49,11 +34,9 @@ variable "codebuild" {
   })
 }
 
-variable "terraform" {
-  type = object({
-    project_path  = string,
-    variable_path = string
-  })
+variable "environment" {
+  type        = string
+  description = "Defines labels for your terraform resources to help discover/differentiate"
 }
 
 variable "github" {
@@ -65,4 +48,22 @@ variable "github" {
     token          = "changeme"
     webhook_secret = "changeme"
   }
+}
+
+variable "region" {
+  type = string
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Tags for each resource required by the codepipeling solution"
+}
+
+variable "terraform" {
+  type = object({
+    project_path  = string,
+    variable_path = string,
+    deploy_role = string
+  })
 }
