@@ -6,7 +6,7 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 3.74.0 |
 
 ## Modules
 
@@ -28,13 +28,9 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_environment"></a> [environment](#input\_environment) | n/a | `string` | `"preprod"` | no |
-| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | n/a | `string` | `"1.21"` | no |
-| <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | n/a | `list(string)` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"ap-southeast-2"` | no |
-| <a name="input_tenant"></a> [tenant](#input\_tenant) | n/a | `string` | `"aws"` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | n/a | `string` | n/a | yes |
-| <a name="input_zone"></a> [zone](#input\_zone) | n/a | `string` | `"test"` | no |
+| <a name="input_eks_addons"></a> [eks\_addons](#input\_eks\_addons) | n/a | `any` | n/a | yes |
+| <a name="input_eks_cluster"></a> [eks\_cluster](#input\_eks\_cluster) | n/a | <pre>object({<br>    compute = object({<br>      nodegroups = object({<br>        aws_managed  = any<br>        self_managed = any<br>      })<br>      fargate_profiles = any<br>    })<br>    kubernetes = object({<br>      version = string<br>    })<br>    map_roles = any<br>    name      = string<br>    vpc = object({<br>      id      = string<br>      subnets = list(string)<br>    })<br>  })</pre> | n/a | yes |
+| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | n/a | yes |
 
 ## Outputs
 
