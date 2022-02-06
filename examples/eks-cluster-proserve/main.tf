@@ -1,5 +1,5 @@
 module "aws-eks-accelerator-for-terraform" {
-  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform"
+  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform?ref=main"
 
   create_eks          = true
   kubernetes_version  = var.eks_cluster.kubernetes.version
@@ -10,11 +10,11 @@ module "aws-eks-accelerator-for-terraform" {
 }
 
 module "aws-eks-accelerator-for-terraform-modules" {
-  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform/modules/kubernetes-addons"
+  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform//modules/kubernetes-addons?ref=main"
 
   eks_cluster_id        = module.aws-eks-accelerator-for-terraform.eks_cluster_id
-  enable_karpenter      = true
-  enable_metrics_server = true
+  enable_karpenter      = var.eks_addons.karpenter.enable
+  enable_metrics_server = var.eks_addons.metrics_server.enable
 
   depends_on = [
     module.aws-eks-accelerator-for-terraform.self_managed_node_groups

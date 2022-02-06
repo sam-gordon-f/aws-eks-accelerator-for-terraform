@@ -46,5 +46,10 @@ eks_cluster = {
 }
 
 eks_addons = {
-
+  karpenter = {
+    enable = true
+  }
+  metrics_server = {
+    enable = true
+  }
 }

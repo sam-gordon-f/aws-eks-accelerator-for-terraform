@@ -24,5 +24,12 @@ variable "eks_cluster" {
 }
 
 variable "eks_addons" {
-  type = any
+  type = object({
+    karpenter = object({
+      enable = bool
+    })
+    metrics_server = object({
+      enable = bool
+    })
+  })
 }
