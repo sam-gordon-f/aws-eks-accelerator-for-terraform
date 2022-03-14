@@ -7,13 +7,13 @@ module "aws-eks-accelerator-for-terraform" {
   map_roles           = local.eks_cluster.map_roles
   private_subnet_ids  = var.eks_cluster.vpc.subnets
   vpc_id              = var.eks_cluster.vpc.id
+  zone                = var.general.zone
 }
 
 module "aws-eks-accelerator-for-terraform-modules" {
   source = "github.com/aws-samples/aws-eks-accelerator-for-terraform//modules/kubernetes-addons?ref=main"
 
   eks_cluster_id        = module.aws-eks-accelerator-for-terraform.eks_cluster_id
-  enable_karpenter      = var.eks_addons.karpenter.enable
   enable_metrics_server = var.eks_addons.metrics_server.enable
 
   depends_on = [

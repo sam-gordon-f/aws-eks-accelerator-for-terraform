@@ -1,5 +1,3 @@
-region = "ap-southeast-2"
-
 eks_cluster = {
   compute = {
     nodegroups = {
@@ -33,7 +31,6 @@ eks_cluster = {
       groups   = ["system:masters"]
     }
   ]
-  name = "aws-preprod-test-eks"
   vpc = {
     id = "vpc-0903b9000fca796da"
     subnets = [
@@ -42,14 +39,17 @@ eks_cluster = {
       "subnet-0f4fdef51814b866a"
     ]
   }
-
 }
 
 eks_addons = {
-  karpenter = {
-    enable = true
-  }
   metrics_server = {
     enable = true
   }
 }
+
+general = {
+  zone = "dev"
+}
+
+region = "ap-southeast-2"
+

@@ -19,10 +19,11 @@ codepipeline = {
   include_lambda_stage = true
   include_test_stage    = true
 }
+eks_cluster_name = "aws-preprod-dev-eks"
 environment = "sample"
-region = "ap-southeast-2"
-terraform = {
-  project_path  = "examples/eks-cluster-proserve",
-  variable_path = "examples/eks-cluster-proserve/__variables/variables.tfvars"
+project = {
+  path  = "examples/eks-cluster-proserve",
+  variable_file = "examples/eks-cluster-proserve/__variables/variables.tfvars"
   deploy_role = "arn:aws:iam::509164722760:role/tmp-tf-deploy"
 }
+region = "ap-southeast-2"

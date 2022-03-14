@@ -1,7 +1,3 @@
-variable "region" {
-  type = string
-}
-
 variable "eks_cluster" {
   type = object({
     compute = object({
@@ -15,7 +11,6 @@ variable "eks_cluster" {
       version = string
     })
     map_roles = any
-    name      = string
     vpc = object({
       id      = string
       subnets = list(string)
@@ -24,12 +19,15 @@ variable "eks_cluster" {
 }
 
 variable "eks_addons" {
+  type = any
+}
+
+variable "general" {
   type = object({
-    karpenter = object({
-      enable = bool
-    })
-    metrics_server = object({
-      enable = bool
-    })
+    zone = string
   })
+}
+
+variable "region" {
+  type = string
 }

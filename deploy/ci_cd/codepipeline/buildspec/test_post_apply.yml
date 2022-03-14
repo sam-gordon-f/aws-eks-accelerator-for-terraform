@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo "Install phase"
+  build:
+    commands:
+      - echo "Build phase"
+      - aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER_NAME
+      - kubectl get pods
+      # iterate over addons
+      # execute testing script
+
+  post_build:
+    commands:
+      - echo "Post Build phase"

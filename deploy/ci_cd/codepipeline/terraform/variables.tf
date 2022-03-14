@@ -8,9 +8,9 @@ variable "codepipeline" {
         branch  = string
       })
     })
-    include_destroy_stage = bool,
-    include_lambda_stage  = bool,
-    include_test_stage    = bool
+    include_destroy_stage  = bool,
+    include_lambda_stage   = bool,
+    include_test_stage     = bool
   })
   default = {
     source = {
@@ -21,9 +21,9 @@ variable "codepipeline" {
         branch  = "master"
       }
     },
-    include_destroy_stage = false,
-    include_lambda_stage  = true,
-    include_test_stage    = true
+    include_destroy_stage  = false,
+    include_lambda_stage   = true,
+    include_test_stage     = true
   }
 }
 
@@ -32,6 +32,10 @@ variable "codebuild" {
     vpc_id     = string
     subnet_ids = list(string)
   })
+}
+
+variable "eks_cluster_name" {
+  type = string
 }
 
 variable "environment" {
@@ -50,6 +54,14 @@ variable "github" {
   }
 }
 
+variable "project" {
+  type = object({
+    path  = string,
+    variable_file = string,
+    deploy_role = string
+  })
+}
+
 variable "region" {
   type = string
 }
@@ -58,12 +70,4 @@ variable "tags" {
   type        = map(string)
   default     = {}
   description = "Tags for each resource required by the codepipeling solution"
-}
-
-variable "terraform" {
-  type = object({
-    project_path  = string,
-    variable_path = string,
-    deploy_role = string
-  })
 }

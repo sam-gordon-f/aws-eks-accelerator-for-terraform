@@ -18,22 +18,22 @@ phases:
       - export PROJECT_ROOT=$(pwd)
         # report setup
       - mkdir $PROJECT_ROOT/reports
-      - touch $PROJECT_ROOT/reports/conftest.xml
-      - touch $PROJECT_ROOT/reports/conftest.json
+      - touch $PROJECT_ROOT/reports/rego.xml
+      - touch $PROJECT_ROOT/reports/rego.json
       - ls -la
-      - cat $TF_PATH/tf.json
         # create test report(s)
-      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/conftest_policies --output=junit > $PROJECT_ROOT/reports/conftest.xml; TEST_STATUS=$?
-      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/conftest_policies --output=json > $PROJECT_ROOT/reports/conftest.json; TEST_STATUS_IGNORE=$?
+      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/rego_policies --output=junit > $PROJECT_ROOT/reports/rego.xml; TEST_STATUS=$?
+      - conftest test $TF_PATH/tf.json -p $PROJECT_ROOT/deploy/ci_cd/codepipeline/rego_policies --output=json > $PROJECT_ROOT/reports/rego.json; TEST_STATUS_IGNORE=$?
         # set codepipeine errors
-      - export TEST_ERRORS=`jq '.[0].failures | length // 0' $PROJECT_ROOT/reports/conftest.json`
+      - export TEST_ERRORS=`jq '.[0].failures | length // 0' $PROJECT_ROOT/reports/rego.json`
         # display test results
-      - echo "conftest, $TEST_STATUS"
-      - cat $PROJECT_ROOT/reports/conftest.xml
+      - echo "rego, $TEST_STATUS"
+      - cat $PROJECT_ROOT/reports/rego.json
+      - cat $PROJECT_ROOT/reports/rego.xml
   post_build:
     commands:
       - echo "Post Build phase"
 reports: 
-  conftest:
+  rego:
     files:
-      - "reports/conftest.xml"
+      - "reports/rego.xml"

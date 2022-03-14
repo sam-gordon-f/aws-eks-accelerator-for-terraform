@@ -1,0 +1,277 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:GetCallerIdentity",
+                "ec2:DescribeAccountAttributes",
+                "ec2:DescribeSecurityGroups"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:ListRolePolicies",
+                "iam:GetRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role/codebuild-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:ListRolePolicies",
+                "iam:GetRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role/lambda-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:ListRolePolicies",
+                "iam:GetRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role/codepipeline-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": "arn:aws:logs:ap-southeast-2:509164722760:log-group:/aws/lambda/sample*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:ListTagsLogGroup"
+            ],
+            "Resource": "arn:aws:logs:ap-southeast-2:509164722760:log-group:/aws/lambda/sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-artefacts-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-tf-state-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-source-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-logs-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketPolicy",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketLogging",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetBucketTagging"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-artefacts-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketLogging",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetBucketTagging",
+                "s3:GetBucketPolicy"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-tf-state-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketPolicy",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketLogging",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetBucketTagging"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-source-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketPolicy",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketLogging",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetBucketTagging"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-logs-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetLifecycleConfiguration"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-tf-state-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetLifecycleConfiguration"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-source-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListAttachedRolePolicies"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role//codebuild-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListAttachedRolePolicies"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role//lambda-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListAttachedRolePolicies"
+            ],
+            "Resource": "arn:aws:iam::509164722760:role//codepipeline-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetLifecycleConfiguration"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-artefacts-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:GetFunction",
+                "lambda:ListVersionsByFunction",
+                "lambda:GetFunctionCodeSigningConfig"
+            ],
+            "Resource": "arn:aws:lambda:ap-southeast-2:509164722760:function:sample-codepipeline-post-apply"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetLifecycleConfiguration"
+            ],
+            "Resource": "arn:aws:s3:::509164722760-ap-southeast-2-codepipeline-logs-sample"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-test-terrascan"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-plan"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-test-conftest"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-test-tfsec"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-destroy"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-test-tflint"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-test-checkov"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects"
+            ],
+            "Resource": "arn:aws:codebuild:ap-southeast-2:509164722760:project/arn:aws:codebuild:ap-southeast-2:509164722760:project/sample-apply"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:GetPipeline",
+                "codepipeline:ListTagsForResource"
+            ],
+            "Resource": "arn:aws:codepipeline:ap-southeast-2:509164722760:sample"
+        }
+    ]
+}

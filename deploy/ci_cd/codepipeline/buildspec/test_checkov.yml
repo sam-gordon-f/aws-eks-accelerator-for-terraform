@@ -15,14 +15,16 @@ phases:
         # report setup
       - mkdir $PROJECT_ROOT/reports
       - touch $PROJECT_ROOT/reports/checkov.xml
-      - cat $TF_PATH/tf.json
+      - touch $PROJECT_ROOT/reports/checkov.json
         # create test report(s)
       - checkov -o junitxml -f $TF_PATH/tf.json > $PROJECT_ROOT/reports/checkov.xml; TEST_STATUS=$?
       - checkov -o json -f $TF_PATH/tf.json > $PROJECT_ROOT/reports/checkov.json; TEST_STATUS_IGNORE=$?
         # set codepipeine errors
-      - export TEST_ERRORS=`jq '[ .[] | select( .check_type | contains("terraform_plan")).summary.failed ][0]' $PROJECT_ROOT/reports/checkov.json`      
+      # - export TEST_ERRORS=`jq '[ .[] | select( .check_type | contains("terraform_plan")).summary.failed ][0]' $PROJECT_ROOT/reports/checkov.json`      
+      - export TEST_ERRORS=`jq '.summary.failed' $PROJECT_ROOT/reports/checkov.json`
         # display test results
       - echo "checkov, $TEST_STATUS"
+      - cat $PROJECT_ROOT/reports/checkov.json
       - cat $PROJECT_ROOT/reports/checkov.xml
   post_build:
     commands:

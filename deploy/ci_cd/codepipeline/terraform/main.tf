@@ -168,7 +168,7 @@ resource "aws_s3_bucket" "tf_state" {
 }
 
 resource "aws_s3_bucket_policy" "tf_state" {
-  count = var.terraform.deploy_role != "" ? 1 : 0
+  count = var.project.deploy_role != "" ? 1 : 0
 
   bucket = aws_s3_bucket.tf_state.id
   policy = jsonencode({ 
@@ -178,7 +178,7 @@ resource "aws_s3_bucket_policy" "tf_state" {
         Effect = "Allow"
         Principal = {
           AWS = [
-            var.terraform.deploy_role
+            var.project.deploy_role
           ]
         }
         Action = "s3:ListBucket"
@@ -187,7 +187,7 @@ resource "aws_s3_bucket_policy" "tf_state" {
         Effect = "Allow" 
         Principal = {
           AWS = [
-            var.terraform.deploy_role
+            var.project.deploy_role
           ]
         }       
         Action = [
@@ -303,12 +303,12 @@ resource "aws_codebuild_project" "test_checkov" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -367,12 +367,12 @@ resource "aws_codebuild_project" "test_tfsec" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -431,12 +431,12 @@ resource "aws_codebuild_project" "test_tflint" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -485,12 +485,12 @@ resource "aws_codebuild_project" "test_terrascan" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -517,8 +517,8 @@ resource "aws_codebuild_project" "test_terrascan" {
   tags = var.tags
 }
 
-resource "aws_codebuild_project" "test_conftest" {
-  name          = format("%s-test-conftest", var.environment)
+resource "aws_codebuild_project" "test_rego" {
+  name          = format("%s-test-rego", var.environment)
   build_timeout = "30"
   service_role  = aws_iam_role.codebuild.arn
 
@@ -549,12 +549,12 @@ resource "aws_codebuild_project" "test_conftest" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -567,7 +567,56 @@ resource "aws_codebuild_project" "test_conftest" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = file("../buildspec/test_conftest.yml")
+    buildspec = file("../buildspec/test_rego.yml")
+  }
+
+  vpc_config {
+    vpc_id  = var.codebuild.vpc_id
+    subnets = var.codebuild.subnet_ids
+    security_group_ids = [
+      aws_security_group.codebuild.id
+    ]
+  }
+
+  tags = var.tags
+}
+
+resource "aws_codebuild_project" "test_post_apply" {
+  name          = format("%s-test-post_apply", var.environment)
+  build_timeout = "30"
+  service_role  = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type                = "BUILD_GENERAL1_SMALL"
+    image                       = "aws/codebuild/standard:1.0"
+    type                        = "LINUX_CONTAINER"
+    image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "AWS_REGION"
+      value = data.aws_region.current.name
+    }
+
+    environment_variable {
+      name  = "EKS_CLUSTER_NAME"
+      value = var.eks_cluster_name
+    }
+  }
+
+  logs_config {
+    s3_logs {
+      status   = "ENABLED"
+      location = "${aws_s3_bucket.logs.id}/build-log"
+    }
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = file("../buildspec/test_post_apply.yml")
   }
 
   vpc_config {
@@ -603,7 +652,7 @@ resource "aws_codebuild_project" "plan" {
     
     environment_variable {
       name  = "TF_DEPLOY_ROLE"
-      value = var.terraform.deploy_role
+      value = var.project.deploy_role
     }
 
     environment_variable {
@@ -618,12 +667,12 @@ resource "aws_codebuild_project" "plan" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -672,7 +721,7 @@ resource "aws_codebuild_project" "apply" {
     
     environment_variable {
       name  = "TF_DEPLOY_ROLE"
-      value = var.terraform.deploy_role
+      value = var.project.deploy_role
     }
 
     environment_variable {
@@ -687,12 +736,12 @@ resource "aws_codebuild_project" "apply" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -741,7 +790,7 @@ resource "aws_codebuild_project" "destroy" {
     
     environment_variable {
       name  = "TF_DEPLOY_ROLE"
-      value = var.terraform.deploy_role
+      value = var.project.deploy_role
     }
 
     environment_variable {
@@ -756,12 +805,12 @@ resource "aws_codebuild_project" "destroy" {
 
     environment_variable {
       name  = "TF_PATH"
-      value = var.terraform.project_path
+      value = var.project.path
     }
 
     environment_variable {
       name  = "TF_VARIABLE_PATH"
-      value = var.terraform.variable_path
+      value = var.project.variable_file
     }
   }
 
@@ -897,7 +946,7 @@ resource "aws_codepipeline" "this" {
         namespace = "build_test_terrascan"
       }
       action {
-        name     = "conftest"
+        name     = "rego"
         category = "Build"
         owner    = "AWS"
         provider = "CodeBuild"
@@ -907,9 +956,9 @@ resource "aws_codepipeline" "this" {
         version = "1"
         configuration = {
           PrimarySource = "build_terraform_plan_output"
-          ProjectName   = aws_codebuild_project.test_conftest.name
+          ProjectName   = aws_codebuild_project.test_rego.name
         }
-        namespace = "build_test_conftest"
+        namespace = "build_test_rego"
       }
     }
   }
@@ -927,7 +976,7 @@ resource "aws_codepipeline" "this" {
         version  = "1"
         configuration = {
           # NotificationArn = "${var.approve_sns_arn}"
-          CustomData = "tfsec errors: #{build_test_tfsec.TEST_ERRORS}\ntflint errors: #{build_test_tflint.TEST_ERRORS}\ncheckov errors: #{build_test_checkov.TEST_ERRORS}\nterrascan failures: #{build_test_terrascan.TEST_ERRORS}\nconftest failures: #{build_test_conftest.TEST_ERRORS}"
+          CustomData = "tfsec errors: #{build_test_tfsec.TEST_ERRORS}\ntflint errors: #{build_test_tflint.TEST_ERRORS}\ncheckov errors: #{build_test_checkov.TEST_ERRORS}\nterrascan failures: #{build_test_terrascan.TEST_ERRORS}\nrego failures: #{build_test_rego.TEST_ERRORS}"
           # ExternalEntityLink = "${var.approve_url}"    
           # external_entity_link = "https://#{TFSEC.Region}.console.aws.amazon.com/codesuite/codebuild/"+core.Stack.of(self).account+"/projects/#{TFSEC.BuildID}/build/#{TFSEC.BuildID}%3A#{TFSEC.BuildTag}/?region=#{TFSEC.Region}",
         }
@@ -976,10 +1025,28 @@ resource "aws_codepipeline" "this" {
     }
   }
 
+  stage {
+    name = "Post_Apply_Test"
+    action {
+      name     = "test"
+      category = "Build"
+      owner    = "AWS"
+      provider = "CodeBuild"
+      input_artifacts = [
+        "build_terraform_plan_output"
+      ]
+      version = "1"
+      configuration = {
+        ProjectName   = aws_codebuild_project.test_post_apply.name
+      }
+      namespace = "build_post_test"
+    }
+  }
+
   dynamic "stage" {
     for_each = var.codepipeline.include_lambda_stage == true ? [1] : []
     content {
-      name = "Post_Apply"
+      name = "Post_Apply_Lambda"
       action {
         name     = "lambda"
         category = "Invoke"
