@@ -9,8 +9,10 @@ locals {
     ami                    = ""
     launch_template_os     = "amazonlinux2eks" #bottlerocket
     launch_template_prefix = ""
-    vpc_security_group_ids = ""
+    instance_type          = ""
+    capacity_type          = ""
     iam_instance_profile   = ""
+    vpc_security_group_ids = ""
 
     network_interfaces = {
       public_ip       = false
@@ -19,7 +21,7 @@ locals {
 
     block_device_mappings = {
       device_name           = "/dev/xvda"
-      volume_type           = "gp2" # The volume type. Can be standard, gp2, gp3, io1, io2, sc1 or st1 (Default: gp2).
+      volume_type           = "gp3" # The volume type. Can be standard, gp2, gp3, io1, io2, sc1 or st1 (Default: gp3).
       volume_size           = "200"
       delete_on_termination = true
       encrypted             = true
@@ -34,7 +36,9 @@ locals {
     kubelet_extra_args   = ""
 
     http_endpoint               = "enabled"
-    http_tokens                 = "optional"
+    http_tokens                 = "required"
     http_put_response_hop_limit = 1
+
+    monitoring = true
   })
 }

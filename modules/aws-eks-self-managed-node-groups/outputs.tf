@@ -15,7 +15,7 @@ output "self_managed_iam_role_name" {
 
 output "self_managed_sec_group_id" {
   description = "Self managed group security group id/ids"
-  value       = var.worker_security_group_id == "" ? aws_security_group.self_managed_ng[*].id : [var.worker_security_group_id]
+  value       = var.context.worker_security_group_id == "" ? aws_security_group.self_managed_ng[*].id : [var.context.worker_security_group_id]
 }
 
 output "self_managed_asg_names" {
@@ -24,18 +24,18 @@ output "self_managed_asg_names" {
 }
 
 output "launch_template_latest_versions" {
-  description = "launch templated version for EKS Self Managed Node Group"
-  value       = aws_launch_template.self_managed_ng[*].latest_version
+  description = "Launch Template latest versions for EKS Self Managed Node Group"
+  value       = module.launch_template_self_managed_ng.launch_template_latest_version
 }
 
 output "launch_template_ids" {
-  description = "launch templated id for EKS Self Managed Node Group"
-  value       = aws_launch_template.self_managed_ng[*].id
+  description = "Launch Template IDs for EKS Self Managed Node Group"
+  value       = module.launch_template_self_managed_ng.launch_template_id
 }
 
 output "launch_template_arn" {
-  description = "launch templated id for EKS Self Managed Node Group"
-  value       = aws_launch_template.self_managed_ng[*].arn
+  description = "Launch Template ARNs for EKS Self Managed Node Group"
+  value       = module.launch_template_self_managed_ng.launch_template_arn
 }
 
 output "self_managed_nodegroup_iam_instance_profile_id" {

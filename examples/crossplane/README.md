@@ -4,6 +4,35 @@ This example deploys the following Basic EKS Cluster with VPC
  - Creates Internet gateway for Public Subnets and NAT Gateway for Private Subnets
  - Creates EKS Cluster Control plane with one managed node group
  - Crossplane Add-on to EKS Cluster
+ - AWS Provider for Crossplane
+ - Terrajet AWS Provider for Crossplane
+
+## Crossplane Design
+
+```mermaid
+graph TD;
+    subgraph AWS Cloud
+    id1(VPC)-->Private-Subnet1;
+    id1(VPC)-->Private-Subnet2;
+    id1(VPC)-->Private-Subnet3;
+    id1(VPC)-->Public-Subnet1;
+    id1(VPC)-->Public-Subnet2;
+    id1(VPC)-->Public-Subnet3;
+    Public-Subnet1-->InternetGateway
+    Public-Subnet2-->InternetGateway
+    Public-Subnet3-->InternetGateway
+    Public-Subnet3-->Single-NATGateway
+    Private-Subnet1-->EKS{{"EKS #9829;"}}
+    Private-Subnet2-->EKS
+    Private-Subnet3-->EKS
+    EKS==>ManagedNodeGroup;
+    ManagedNodeGroup-->|enable_crossplane=true|id2([Crossplane]);
+    subgraph Kubernetes Add-ons
+    id2([Crossplane])-.->|crossplane_aws_provider.enable=true|id3([AWS-Provider]);
+    id2([Crossplane])-.->|crossplane_jet_aws_provider.enable=true|id4([Terrajet-AWS-Provider]);
+    end
+    end
+```
 
 ## How to Deploy
 ### Prerequisites:
@@ -52,24 +81,88 @@ This following command used to update the `kubeconfig` in your local machine whe
 
 `~/.kube/config` file gets updated with cluster details and certificate from the below command
 
-    $ aws eks --region <enter-your-region> update-kubeconfig --name <cluster-name>
+```shell script
+aws eks --region <enter-your-region> update-kubeconfig --name <cluster-name>
+```
 
 #### Step6: List all the worker nodes by running the command below
 
-    $ kubectl get nodes
+```shell script
+kubectl get nodes
+```
 
-#### Step7: List all the pods running in `kube-system` namespace
+#### Step7: List all the pods running in `crossplane` namespace
 
-    $ kubectl get pods -n kube-system
+```shell script
+kubectl get pods -n crossplane
+```
+
+### AWS Provider for Crossplane
+This example shows how to deploy S3 bucket using Crossplane AWS provider
+
+ - Open the file below
+
+```shell script
+vi ~/examples/crossplane/crossplane-aws-examples/aws-provider-s3.yaml
+```
+ - Edit the below `aws-provider-s3.yaml` to update the new bucket name
+
+ - Enter the new `bucket name` and `region` in YAML file. Save the file using :wq!
+
+ - Apply the K8s manifest
+
+```shell script
+cd ~/examples/crossplane/crossplane-aws-examples/
+kubectl apply -f aws-provider-s3.yaml
+```
+
+ - Login to AWS Console and verify the new S3 bucket
+
+To Delete the bucket
+```shell script
+cd ~/examples/crossplane/crossplane-aws-examples/
+kubectl delete -f aws-provider-s3.yaml
+```
+### Terrajet AWS Provider for Crossplane
+This example shows how to deploy S3 bucket using Crossplane Terrajet AWS Provider
+
+ - Open the file below
+
+```shell script
+vi ~/examples/crossplane/crossplane-aws-examples/jet-aws-provider-s3.yaml
+```
+ - Edit the below `jet-aws-provider-s3.yaml` to update the new bucket name
+
+ - Enter the new `bucket name` and `region` in YAML file. Save the file using :wq!
+
+ - Apply the K8s manifest
+
+```shell script
+cd ~/examples/crossplane/crossplane-aws-examples/
+kubectl apply -f jet-aws-provider-s3.yaml
+```
+
+ - Login to AWS Console and verify the new S3 bucket
+
+To Delete the bucket
+```shell script
+cd ~/examples/crossplane/crossplane-aws-examples/
+kubectl delete -f jet-aws-provider-s3.yaml
+```
 
 ## How to Destroy
 The following command destroys the resources created by `terraform apply`
+
+Step1: Delete resources created by Crossplane
+
+Step2: Terraform Destroy
 
 ```shell script
 cd examples/crossplane
 terraform destroy --auto-approve
 ```
 
+---
 
 <!--- BEGIN_TF_DOCS --->
 ## Requirements
@@ -79,6 +172,7 @@ terraform destroy --auto-approve
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.1 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.66.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.4.1 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.13.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.6.1 |
 
 ## Providers

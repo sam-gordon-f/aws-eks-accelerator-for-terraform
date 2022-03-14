@@ -1,3 +1,26 @@
+terraform {
+  required_version = ">= 1.0.1"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.66.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.6.1"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.4.1"
+    }
+  }
+
+  backend "local" {
+    path = "local_tf_state/terraform-main.tfstate"
+  }
+}
+
 provider "aws" {}
 
 provider "kubernetes" {
@@ -29,18 +52,12 @@ data "aws_eks_cluster_auth" "cluster" {
   name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
 }
 
-terraform {
-  backend "local" {
-    path = "local_tf_state/terraform-main.tfstate"
-  }
-}
-
 locals {
-  tenant      = "aws001"  # AWS account name or unique id for tenant
-  environment = "preprod" # Environment area eg., preprod or prod
-  zone        = "test"    # Environment with in one sub_tenant or business unit
-
-  kubernetes_version = "1.21"
+  tenant                  = "aws001"  # AWS account name or unique id for tenant
+  environment             = "preprod" # Environment area eg., preprod or prod
+  zone                    = "test"    # Environment with in one sub_tenant or business unit
+  count_availability_zone = (length(data.aws_availability_zones.available.names) <= 3) ? length(data.aws_availability_zones.available.zone_ids) : 3
+  kubernetes_version      = "1.21"
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
@@ -57,8 +74,8 @@ module "aws_vpc" {
   cidr = local.vpc_cidr
   azs  = data.aws_availability_zones.available.names
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, local.count_availability_zone) : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, local.count_availability_zone) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -80,9 +97,7 @@ module "aws_vpc" {
 # Example to consume aws-eks-accelerator-for-terraform module
 #---------------------------------------------------------------
 module "aws-eks-accelerator-for-terraform" {
-  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform"
-
-  create_eks = true
+  source = "../../.."
 
   tenant            = local.tenant
   environment       = local.environment
@@ -130,7 +145,7 @@ module "aws-eks-accelerator-for-terraform" {
 }
 
 module "kubernetes-addons" {
-  source = "github.com/aws-samples/aws-eks-accelerator-for-terraform//modules/kubernetes-addons"
+  source = "../../../modules/kubernetes-addons"
 
   eks_cluster_id = module.aws-eks-accelerator-for-terraform.eks_cluster_id
   #K8s Add-ons
@@ -151,8 +166,9 @@ module "kubernetes-addons" {
     name       = "prometheus"                                         # (Required) Release name.
     repository = "https://prometheus-community.github.io/helm-charts" # (Optional) Repository URL where to locate the requested chart.
     chart      = "prometheus"                                         # (Required) Chart name to be installed.
-    version    = "14.4.0"                                             # (Optional) Specify the exact chart version to install. If this is not specified, the latest version is installed.
-    namespace  = "prometheus"                                         # (Optional) The namespace to install the release into. Defaults to default
+    version    = "15.3.0"
+    # (Optional) Specify the exact chart version to install.
+    namespace = "prometheus" # (Optional) The namespace to install the release into.
     values = [templatefile("${path.module}/helm_values/prometheus-values.yaml", {
       operating_system = "linux"
     })]
@@ -166,8 +182,8 @@ module "kubernetes-addons" {
     name       = "vpa"                                 # (Required) Release name.
     repository = "https://charts.fairwinds.com/stable" # (Optional) Repository URL where to locate the requested chart.
     chart      = "vpa"                                 # (Required) Chart name to be installed.
-    version    = "0.5.0"                               # (Optional) Specify the exact chart version to install. If this is not specified, the latest version is installed.
-    namespace  = "vpa-ns"                              # (Optional) The namespace to install the release into. Defaults to default
+    version    = "1.0.0"                               # (Optional) Specify the exact chart version to install
+    namespace  = "vpa"                                 # (Optional) The namespace to install the release into.
     values     = [templatefile("${path.module}/helm_values/vpa-values.yaml", {})]
   }
 
