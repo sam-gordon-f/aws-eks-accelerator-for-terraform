@@ -35,10 +35,11 @@ module "kms" {
   count  = var.create_eks && var.cluster_kms_key_arn == null ? 1 : 0
   source = "./modules/aws-kms"
 
-  alias       = "alias/${module.eks_tags.id}"
-  description = "${module.eks_tags.id} EKS cluster secret encryption key"
-  policy      = data.aws_iam_policy_document.eks_key.json
-  tags        = module.eks_tags.tags
+  alias                   = "alias/${module.eks_tags.id}"
+  description             = "${module.eks_tags.id} EKS cluster secret encryption key"
+  policy                  = data.aws_iam_policy_document.eks_key.json
+  deletion_window_in_days = var.cluster_kms_key_deletion_window_in_days
+  tags                    = module.eks_tags.tags
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -59,12 +60,16 @@ module "aws_eks" {
   vpc_id  = var.vpc_id
   subnets = var.private_subnet_ids
 
-  cluster_endpoint_private_access = var.cluster_endpoint_private_access
-  cluster_endpoint_public_access  = var.cluster_endpoint_public_access
+  cluster_endpoint_private_access                = var.cluster_endpoint_private_access
+  cluster_create_endpoint_private_access_sg_rule = local.cluster_create_endpoint_private_access_sg_rule
+  cluster_endpoint_private_access_cidrs          = local.cluster_endpoint_private_access_cidrs
+  cluster_endpoint_private_access_sg             = local.cluster_endpoint_private_access_sg
 
-  worker_create_security_group         = var.worker_create_security_group
-  worker_additional_security_group_ids = var.worker_additional_security_group_ids
-  cluster_log_retention_in_days        = var.cluster_log_retention_in_days
+  cluster_endpoint_public_access       = var.cluster_endpoint_public_access
+  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+
+  worker_create_security_group  = var.worker_create_security_group
+  cluster_log_retention_in_days = var.cluster_log_retention_in_days
 
   # IRSA
   enable_irsa = var.enable_irsa
@@ -109,7 +114,7 @@ module "emr_on_eks" {
   eks_cluster_id   = module.aws_eks.cluster_id
   tags             = var.tags
 
-  depends_on = [module.aws_eks, kubernetes_config_map.aws_auth]
+  depends_on = [kubernetes_config_map.aws_auth]
 }
 
 resource "kubernetes_config_map" "amazon_vpc_cni" {
@@ -124,7 +129,7 @@ resource "kubernetes_config_map" "amazon_vpc_cni" {
   }
 
   depends_on = [
-    module.aws_eks,
+    module.aws_eks.cluster_id,
     data.http.eks_cluster_readiness[0]
   ]
 }
@@ -133,6 +138,7 @@ resource "kubernetes_config_map" "amazon_vpc_cni" {
 # Teams
 # ---------------------------------------------------------------------------------------------------------------------
 module "aws_eks_teams" {
+  count  = length(var.application_teams) > 0 || length(var.platform_teams) > 0 ? 1 : 0
   source = "./modules/aws-eks-teams"
 
   application_teams = var.application_teams
@@ -142,6 +148,4 @@ module "aws_eks_teams" {
   zone              = var.zone
   eks_cluster_id    = module.aws_eks.cluster_id
   tags              = module.eks_tags.tags
-
-  depends_on = [module.aws_eks]
 }

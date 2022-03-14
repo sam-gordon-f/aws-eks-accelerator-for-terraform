@@ -89,6 +89,53 @@ variable "cluster_autoscaler_helm_config" {
   description = "Cluster Autoscaler Helm Chart config"
 }
 
+variable "cluster_autoscaler_irsa_permissions_boundary" {
+  type        = string
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+  default     = ""
+}
+
+#-----------Crossplane ADDON-------------
+variable "enable_crossplane" {
+  type        = bool
+  default     = false
+  description = "Enable Crossplane add-on"
+}
+
+variable "crossplane_helm_config" {
+  type        = any
+  default     = null
+  description = "Crossplane Helm Chart config"
+}
+
+variable "crossplane_aws_provider" {
+  description = "AWS Provider config for Crossplane"
+  type = object({
+    enable                   = bool
+    provider_aws_version     = string
+    additional_irsa_policies = list(string)
+  })
+  default = {
+    enable                   = false
+    provider_aws_version     = "v0.24.1"
+    additional_irsa_policies = []
+  }
+}
+
+variable "crossplane_jet_aws_provider" {
+  description = "AWS Provider Jet AWS config for Crossplane"
+  type = object({
+    enable                   = bool
+    provider_aws_version     = string
+    additional_irsa_policies = list(string)
+  })
+  default = {
+    enable                   = false
+    provider_aws_version     = "v0.24.1"
+    additional_irsa_policies = []
+  }
+}
+
 #-----------Amazon Managed Service for Prometheus-------------
 variable "enable_amazon_prometheus" {
   type        = bool
@@ -166,6 +213,19 @@ variable "agones_helm_config" {
   description = "Agones GameServer Helm Chart config"
 }
 
+#-----------AWS EFS CSI DRIVER ADDON-------------
+variable "enable_aws_efs_csi_driver" {
+  type        = bool
+  default     = false
+  description = "Enable AWS EFS CSI driver add-on"
+}
+
+variable "aws_efs_csi_driver_helm_config" {
+  type        = any
+  description = "AWS EFS CSI driver Helm Chart config"
+  default     = {}
+}
+
 #-----------AWS LB Ingress Controller-------------
 variable "enable_aws_load_balancer_controller" {
   type        = bool
@@ -177,6 +237,12 @@ variable "aws_load_balancer_controller_helm_config" {
   type        = any
   description = "AWS Load Balancer Controller Helm Chart config"
   default     = {}
+}
+
+variable "aws_load_balancer_controller_irsa_permissions_boundary" {
+  type        = string
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+  default     = ""
 }
 
 #-----------NGINX-------------
@@ -192,6 +258,18 @@ variable "ingress_nginx_helm_config" {
   default     = {}
 }
 
+variable "nginx_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts"
+  default     = []
+}
+
+variable "nginx_ingress_controller_irsa_permissions_boundary" {
+  type        = string
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+  default     = ""
+}
+
 #-----------SPARK K8S OPERATOR-------------
 variable "enable_spark_k8s_operator" {
   type        = bool
@@ -203,6 +281,30 @@ variable "spark_k8s_operator_helm_config" {
   description = "Spark on K8s Operator Helm Chart config"
   type        = any
   default     = {}
+}
+
+variable "spark_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts for Spark App"
+  default     = []
+}
+
+variable "spark_irsa_permissions_boundary" {
+  type        = string
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary for Spark App"
+  default     = ""
+}
+
+variable "spark_operator_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts for Spark Operator"
+  default     = []
+}
+
+variable "spark_operator_irsa_permissions_boundary" {
+  type        = string
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary for Spark Operator"
+  default     = ""
 }
 
 #-----------AWS FOR FLUENT BIT-------------
@@ -266,18 +368,6 @@ variable "cert_manager_helm_config" {
   description = "Cert Manager Helm Chart config"
   default     = {}
 }
-#-----------AWS OPEN TELEMETRY ADDON-------------
-variable "enable_aws_open_telemetry" {
-  type        = bool
-  default     = false
-  description = "Enable AWS Open Telemetry Distro add-on"
-}
-
-variable "aws_open_telemetry_addon_config" {
-  type        = any
-  default     = {}
-  description = "AWS Open Telemetry Distro add-on config"
-}
 
 #-----------ARGOCD ADDON-------------
 variable "enable_argocd" {
@@ -296,6 +386,12 @@ variable "argocd_applications" {
   type        = any
   default     = {}
   description = "Argo CD Applications config to bootstrap the cluster"
+}
+
+variable "argocd_admin_password_secret_name" {
+  type        = string
+  default     = ""
+  description = "Name for a secret stored in AWS Secrets Manager that contains the admin password."
 }
 
 variable "argocd_manage_add_ons" {
@@ -317,6 +413,18 @@ variable "aws_node_termination_handler_helm_config" {
   default     = {}
 }
 
+variable "node_termination_handler_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts"
+  default     = []
+}
+
+variable "node_termination_handler_irsa_permissions_boundary" {
+  type        = string
+  default     = ""
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+}
+
 #-----------KARPENTER ADDON-------------
 variable "enable_karpenter" {
   type        = bool
@@ -336,6 +444,11 @@ variable "karpenter_irsa_policies" {
   default     = []
 }
 
+variable "karpenter_node_iam_instance_profile" {
+  description = "Karpenter Node IAM Instance profile id"
+  default     = ""
+  type        = string
+}
 #-----------KEDA ADDON-------------
 variable "enable_keda" {
   type        = bool
@@ -361,17 +474,23 @@ variable "keda_irsa_policies" {
   default     = []
 }
 
-#-----------Vertical Pod Autoscaler(VPA) ADDON-------------
+variable "keda_irsa_permissions_boundary" {
+  type        = string
+  default     = ""
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+}
+
+#------Vertical Pod Autoscaler(VPA) ADDON--------
 variable "enable_vpa" {
   type        = bool
   default     = false
-  description = "Enable Kubernetes Vertical Pod Autoscaler add-on"
+  description = "Enable Vertical Pod Autoscaler add-on"
 }
 
 variable "vpa_helm_config" {
   type        = any
-  default     = {}
-  description = "Vertical Pod Autoscaler Helm Chart config"
+  default     = null
+  description = "VPA Helm Chart config"
 }
 
 #-----------Apache YuniKorn ADDON-------------
@@ -383,8 +502,20 @@ variable "enable_yunikorn" {
 
 variable "yunikorn_helm_config" {
   type        = any
-  default     = {}
-  description = "YuniKorn K8s scheduler Helm Chart config"
+  default     = null
+  description = "Yunikorn Helm Chart config"
+}
+
+variable "yunikorn_irsa_policies" {
+  type        = list(string)
+  default     = []
+  description = "IAM policy ARNs for Yunikorn IRSA"
+}
+
+variable "yunikorn_irsa_permissions_boundary" {
+  type        = string
+  default     = ""
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
 }
 
 #-----------Argo Rollouts ADDON-------------
@@ -400,8 +531,39 @@ variable "argo_rollouts_helm_config" {
   description = "Argo Rollouts Helm Chart config"
 }
 
+variable "argo_rollouts_irsa_permissions_boundary" {
+  type        = string
+  default     = ""
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
+}
+
 variable "argo_rollouts_irsa_policies" {
   type        = list(string)
   default     = []
   description = "IAM policy ARNs for Argo Rollouts IRSA"
+}
+
+#-----------Kubernetes Dashboard ADDON-------------
+variable "enable_kubernetes_dashboard" {
+  type        = bool
+  default     = false
+  description = "Enable Kubernetes Dashboard add-on"
+}
+
+variable "kubernetes_dashboard_helm_config" {
+  type        = any
+  default     = null
+  description = "Kubernetes Dashboard Helm Chart config"
+}
+
+variable "kubernetes_dashboard_irsa_policies" {
+  type        = list(string)
+  default     = []
+  description = "IAM policy ARNs for Kubernetes Dashboard IRSA"
+}
+
+variable "kubernetes_dashboard_irsa_permissions_boundary" {
+  type        = string
+  default     = ""
+  description = "IAM Policy ARN for IRSA IAM role permissions boundary"
 }

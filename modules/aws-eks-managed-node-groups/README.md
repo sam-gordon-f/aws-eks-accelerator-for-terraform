@@ -43,6 +43,8 @@ This module allows you to create ON-DEMAND, SPOT and BOTTLEROCKET(with custom am
       subnet_ids  = []        # Define your private/public subnets list with comma seprated subnet_ids  = ['subnet1','subnet2','subnet3']
 
       k8s_taints = []
+      # optionally, configure a taint on the node group:
+      # k8s_taints = [{key= "purpose", value="execution", "effect"="NO_SCHEDULE"}]
 
       k8s_labels = {
         Environment = "preprod"
@@ -184,39 +186,27 @@ No modules.
 | [aws_security_group_rule.worker_to_worker_sgr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.workers_ingress_cluster_primary_sgr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.workers_ingress_control_plane_sgr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.managed_ng_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_ca_base64"></a> [cluster\_ca\_base64](#input\_cluster\_ca\_base64) | Base64-encoded EKS cluster certificate-authority-data | `string` | n/a | yes |
-| <a name="input_cluster_endpoint"></a> [cluster\_endpoint](#input\_cluster\_endpoint) | EKS Cluster K8s API server endpoint | `string` | n/a | yes |
-| <a name="input_cluster_primary_security_group_id"></a> [cluster\_primary\_security\_group\_id](#input\_cluster\_primary\_security\_group\_id) | EKS Cluster primary security group ID | `string` | `""` | no |
-| <a name="input_cluster_security_group_id"></a> [cluster\_security\_group\_id](#input\_cluster\_security\_group\_id) | EKS Cluster Security group ID | `string` | `""` | no |
-| <a name="input_eks_cluster_id"></a> [eks\_cluster\_id](#input\_eks\_cluster\_id) | EKS Cluster name | `string` | n/a | yes |
-| <a name="input_http_endpoint"></a> [http\_endpoint](#input\_http\_endpoint) | Whether the Instance Metadata Service (IMDS) is available. Supported values: enabled, disabled | `string` | `"enabled"` | no |
-| <a name="input_http_put_response_hop_limit"></a> [http\_put\_response\_hop\_limit](#input\_http\_put\_response\_hop\_limit) | HTTP PUT response hop limit for instance metadata requests. Supported values: 1-64. | `number` | `2` | no |
-| <a name="input_http_tokens"></a> [http\_tokens](#input\_http\_tokens) | If enabled, will use Instance Metadata Service Version 2 (IMDSv2). Supported values: optional, required. | `string` | `"optional"` | no |
+| <a name="input_context"></a> [context](#input\_context) | Input configuration for the Node groups | <pre>object({<br>    # EKS Cluster Config<br>    eks_cluster_id     = string<br>    cluster_ca_base64  = string<br>    cluster_endpoint   = string<br>    kubernetes_version = string<br>    # VPC Config<br>    vpc_id             = string<br>    private_subnet_ids = list(string)<br>    public_subnet_ids  = list(string)<br>    # Security Groups<br>    worker_security_group_id             = string<br>    worker_additional_security_group_ids = list(string)<br>    cluster_security_group_id            = string<br>    cluster_primary_security_group_id    = string<br>    # Http config<br>    http_endpoint               = string<br>    http_tokens                 = string<br>    http_put_response_hop_limit = number<br>    # Data sources<br>    aws_partition_dns_suffix = string<br>    aws_partition_id         = string<br>    # Tags<br>    tags = map(string)<br>  })</pre> | n/a | yes |
 | <a name="input_managed_ng"></a> [managed\_ng](#input\_managed\_ng) | Map of maps of `eks_node_groups` to create | `any` | `{}` | no |
 | <a name="input_path"></a> [path](#input\_path) | IAM resource path, e.g. /dev/ | `string` | `"/"` | no |
-| <a name="input_private_subnet_ids"></a> [private\_subnet\_ids](#input\_private\_subnet\_ids) | list of private subnets Id's for the Worker nodes | `list` | `[]` | no |
-| <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | list of public subnets Id's for the Worker nodes | `list` | `[]` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources | `map(string)` | `{}` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC Id used in security group creation | `string` | `""` | no |
-| <a name="input_worker_security_group_id"></a> [worker\_security\_group\_id](#input\_worker\_security\_group\_id) | Worker group security ID | `string` | `""` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
+| <a name="output_managed_nodegroup_iam_instance_profile_arn"></a> [managed\_nodegroup\_iam\_instance\_profile\_arn](#output\_managed\_nodegroup\_iam\_instance\_profile\_arn) | IAM instance profile arn for EKS Managed Node Group |
+| <a name="output_managed_nodegroup_iam_instance_profile_id"></a> [managed\_nodegroup\_iam\_instance\_profile\_id](#output\_managed\_nodegroup\_iam\_instance\_profile\_id) | IAM instance profile id for EKS Managed Node Group |
 | <a name="output_managed_nodegroup_iam_role_arn"></a> [managed\_nodegroup\_iam\_role\_arn](#output\_managed\_nodegroup\_iam\_role\_arn) | IAM role ARN for EKS Managed Node Group |
-| <a name="output_managed_nodegroup_iam_role_name"></a> [managed\_nodegroup\_iam\_role\_name](#output\_managed\_nodegroup\_iam\_role\_name) | IAM role Names for EKS Managed Node Group |
-| <a name="output_managed_nodegroup_launch_template_arn"></a> [managed\_nodegroup\_launch\_template\_arn](#output\_managed\_nodegroup\_launch\_template\_arn) | launch templated id for EKS Managed Node Group |
-| <a name="output_managed_nodegroup_launch_template_id"></a> [managed\_nodegroup\_launch\_template\_id](#output\_managed\_nodegroup\_launch\_template\_id) | launch templated id for EKS Managed Node Group |
-| <a name="output_managed_nodegroup_launch_template_latest_version"></a> [managed\_nodegroup\_launch\_template\_latest\_version](#output\_managed\_nodegroup\_launch\_template\_latest\_version) | launch templated version for EKS Managed Node Group |
+| <a name="output_managed_nodegroup_iam_role_name"></a> [managed\_nodegroup\_iam\_role\_name](#output\_managed\_nodegroup\_iam\_role\_name) | IAM role name for EKS Managed Node Group |
+| <a name="output_managed_nodegroup_launch_template_arn"></a> [managed\_nodegroup\_launch\_template\_arn](#output\_managed\_nodegroup\_launch\_template\_arn) | Launch Template ARN for EKS Managed Node Group |
+| <a name="output_managed_nodegroup_launch_template_id"></a> [managed\_nodegroup\_launch\_template\_id](#output\_managed\_nodegroup\_launch\_template\_id) | Launch Template ID for EKS Managed Node Group |
+| <a name="output_managed_nodegroup_launch_template_latest_version"></a> [managed\_nodegroup\_launch\_template\_latest\_version](#output\_managed\_nodegroup\_launch\_template\_latest\_version) | Launch Template version for EKS Managed Node Group |
 | <a name="output_managed_nodegroup_sec_group_id"></a> [managed\_nodegroup\_sec\_group\_id](#output\_managed\_nodegroup\_sec\_group\_id) | Security group ID for Managed node group |
 | <a name="output_managed_nodegroups"></a> [managed\_nodegroups](#output\_managed\_nodegroups) | EKS Managed node group id |
 
