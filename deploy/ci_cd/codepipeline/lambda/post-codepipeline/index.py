@@ -7,7 +7,7 @@ def post_action_fail(params):
 
     response = client.put_job_failure_result(
         jobId = params.job,
-        failureDetails={
+        failureDetails = {
             'type': 'JobFailed',
             'message': params['message'],
             'externalExecutionId': params['externalExecutionId']
@@ -20,6 +20,7 @@ def post_action_success(params):
     response = client.put_job_success_result(
         jobId = params['job']
     )
+    return True
 
 def handler(event, context): 
     print("post action here")
@@ -27,10 +28,9 @@ def handler(event, context):
     print(event)
 
     try:
-        post_action_success({
+        return post_action_success({
             "job": event["CodePipeline.job"]['id']
         })
-        return True
     
     except Exception as e:
         post_action_fail({

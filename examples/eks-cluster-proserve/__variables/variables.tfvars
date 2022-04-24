@@ -1,4 +1,17 @@
 eks_cluster = {
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access = true
+  cluster_security_group_additional_rules = {
+    vpc_ingress_access = {
+      cidr_blocks = ["10.0.0.0/8"]
+      description = "allow vpc to access cluster"
+      protocol = "-1"
+      from_port = "0"
+      to_port = "65535"
+      type = "ingress"
+    }
+  }
+  cluster_version = "1.21"
   compute = {
     nodegroups = {
       aws_managed  = {
@@ -16,15 +29,14 @@ eks_cluster = {
     }
     fargate_profiles = {}
   }
-  kubernetes = {
-    version = "1.21"
-  }
   map_roles = [
+      # allow Single sign on "administrators" the ability to interact with cluster
     {
       rolearn  = "arn:aws:iam::509164722760:role/AWSReservedSSO_AdministratorAccess_7b03154eac0dbfd9"
       username = "SSOAdminAccess"
       groups   = ["system:masters"]
     },
+      # allow "EC2 SSM instances" the ability to interact with cluster
     {
       rolearn  = "arn:aws:iam::509164722760:role/EC2SSMInstance"
       username = "EC2SSMAccess"
@@ -44,6 +56,16 @@ eks_cluster = {
 eks_addons = {
   metrics_server = {
     enable = true
+  }
+  argocd = {
+    enable = true,
+    applications = {
+      addons = {
+        path                = "chart"
+        repo_url            = "https://github.com/aws-samples/eks-blueprints-add-ons.git"
+        add_on_application  = true
+      }
+    }
   }
 }
 

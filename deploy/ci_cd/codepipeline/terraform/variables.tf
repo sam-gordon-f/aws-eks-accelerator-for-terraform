@@ -36,6 +36,7 @@ variable "codebuild" {
 
 variable "eks_cluster_name" {
   type = string
+  description = "name of the eks-cluster being deployed. (Used for testing purposes)"
 }
 
 variable "environment" {
@@ -60,6 +61,12 @@ variable "project" {
     variable_file = string,
     deploy_role = string
   })
+  default = {
+    path = "/examples/eks-cluster-proserve"
+    variable_file = "/examples/eks-cluster-proserve/__variables/variables.tfvars",
+    deploy_role = null,
+  }
+  description = "The only mandatory property is the 'path'"
 }
 
 variable "region" {

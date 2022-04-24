@@ -26,7 +26,7 @@ phases:
       - cd $TF_PATH
       - tflint --format junit > $PROJECT_ROOT/reports/tflint.xml; TEST_STATUS=$?
         # set codepipeine errors
-      - export TEST_ERRORS=`tflint --format json | jq -r '.errors | length'`
+      - export TEST_ERRORS=`tflint --format json --module | jq -r '.errors | length'`
       - cd $PROJECT_ROOT
       - echo "tfsec, $TEST_STATUS"
       - cat $PROJECT_ROOT/reports/tflint.xml
