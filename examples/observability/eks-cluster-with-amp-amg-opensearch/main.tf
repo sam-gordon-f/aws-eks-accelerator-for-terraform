@@ -30,10 +30,11 @@ locals {
   environment = "preprod"       # Environment area eg., preprod or prod
   zone        = "observability" # Environment within one sub_tenant or business unit
 
-  kubernetes_version = "1.21"
+  cluster_version = "1.21"
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.1.4"
@@ -41,7 +42,7 @@ locals {
   # Sample workload managed by ArgoCD. For generating metrics and logs
   workload_application = {
     path               = "envs/dev"
-    repo_url           = "https://github.com/aws-samples/ssp-eks-workloads.git"
+    repo_url           = "https://github.com/aws-samples/eks-blueprints-workloads.git"
     add_on_application = false
   }
 
@@ -57,10 +58,10 @@ module "aws_vpc" {
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -81,7 +82,7 @@ module "aws_vpc" {
 #---------------------------------------------------------------
 # Provision EKS and Helm Charts
 #---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+module "eks-blueprints" {
   source = "../../.."
 
   tenant            = local.tenant
@@ -94,7 +95,7 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS Control Plane Variables
-  kubernetes_version = local.kubernetes_version
+  cluster_version = local.cluster_version
 
   managed_node_groups = {
     mg_4 = {
@@ -109,9 +110,9 @@ module "aws-eks-accelerator-for-terraform" {
   enable_amazon_prometheus = true
 }
 
-module "kubernetes-addons" {
+module "eks-blueprints-kubernetes-addons" {
   source         = "../../../modules/kubernetes-addons"
-  eks_cluster_id = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  eks_cluster_id = module.eks-blueprints.eks_cluster_id
 
   #K8s Add-ons
   enable_metrics_server     = true
@@ -134,10 +135,10 @@ module "kubernetes-addons" {
   # Prometheus and Amazon Managed Prometheus integration
   enable_prometheus                    = true
   enable_amazon_prometheus             = true
-  amazon_prometheus_workspace_endpoint = module.aws-eks-accelerator-for-terraform.amazon_prometheus_workspace_endpoint
+  amazon_prometheus_workspace_endpoint = module.eks-blueprints.amazon_prometheus_workspace_endpoint
 
   depends_on = [
-    module.aws-eks-accelerator-for-terraform.managed_node_groups,
+    module.eks-blueprints.managed_node_groups,
     module.aws_vpc
   ]
 }
@@ -149,7 +150,7 @@ resource "grafana_data_source" "prometheus" {
   type       = "prometheus"
   name       = "amp"
   is_default = true
-  url        = module.aws-eks-accelerator-for-terraform.amazon_prometheus_workspace_endpoint
+  url        = module.eks-blueprints.amazon_prometheus_workspace_endpoint
   json_data {
     http_method     = "POST"
     sigv4_auth      = true

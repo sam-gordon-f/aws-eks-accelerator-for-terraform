@@ -21,20 +21,18 @@ terraform {
   }
 }
 
-data "aws_region" "current" {}
-
 data "aws_availability_zones" "available" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks_blueprints.eks_cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks_blueprints.eks_cluster_id
 }
 
 provider "aws" {
-  region = data.aws_region.current.id
+  region = var.region
   alias  = "default"
 }
 
@@ -56,13 +54,14 @@ provider "helm" {
 }
 
 locals {
-  tenant             = "aws001"  # AWS account name or unique id for tenant
-  environment        = "preprod" # Environment area eg., preprod or prod
-  zone               = "dev"     # Environment with in one sub_tenant or business unit
-  kubernetes_version = "1.21"
+  tenant          = var.tenant      # AWS account name or unique id for tenant
+  environment     = var.environment # Environment area eg., preprod or prod
+  zone            = var.zone        # Environment with in one sub_tenant or business unit
+  cluster_version = var.cluster_version
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.0.1"
@@ -74,10 +73,10 @@ module "aws_vpc" {
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in data.aws_availability_zones.available.names : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in data.aws_availability_zones.available.names : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -95,9 +94,9 @@ module "aws_vpc" {
   }
 }
 #---------------------------------------------------------------
-# Example to consume aws-eks-accelerator-for-terraform module
+# Example to consume eks_blueprints module
 #---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+module "eks_blueprints" {
   source = "../.."
 
   tenant            = local.tenant
@@ -110,42 +109,22 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS CONTROL PLANE VARIABLES
-  kubernetes_version = local.kubernetes_version
+  cluster_version = local.cluster_version
 
   # EKS MANAGED NODE GROUPS
   managed_node_groups = {
     mg_4 = {
       node_group_name = "managed-ondemand"
-      instance_types  = ["m4.large"]
+      instance_types  = ["m5.large"]
       min_size        = "2"
       subnet_ids      = module.aws_vpc.private_subnets
     }
   }
-
-  # FARGATE
-  fargate_profiles = {
-    default = {
-      fargate_profile_name = "default"
-      fargate_profile_namespaces = [
-        {
-          namespace = "default"
-          k8s_labels = {
-            Environment = "preprod"
-            Zone        = "dev"
-            env         = "fargate"
-          }
-      }]
-      subnet_ids = module.aws_vpc.private_subnets
-      additional_tags = {
-        ExtraTag = "Fargate"
-      }
-    },
-  }
 }
 
-module "kubernetes-addons" {
+module "eks_blueprints_kubernetes_addons" {
   source         = "../../modules/kubernetes-addons"
-  eks_cluster_id = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  eks_cluster_id = module.eks_blueprints.eks_cluster_id
 
   # EKS Managed Add-ons
   enable_amazon_eks_vpc_cni    = true
@@ -156,6 +135,7 @@ module "kubernetes-addons" {
   enable_aws_load_balancer_controller = true
   enable_metrics_server               = true
   enable_cluster_autoscaler           = true
+  enable_aws_cloudwatch_metrics       = true
 
-  depends_on = [module.aws-eks-accelerator-for-terraform.managed_node_groups]
+  depends_on = [module.eks_blueprints.managed_node_groups]
 }

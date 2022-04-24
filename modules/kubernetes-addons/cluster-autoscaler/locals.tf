@@ -14,9 +14,8 @@ locals {
   }
 
   default_helm_values = [templatefile("${path.module}/values.yaml", {
-    aws_region           = var.addon_context.aws_region_name,
-    eks_cluster_id       = var.addon_context.eks_cluster_id
-    service_account_name = local.service_account_name
+    aws_region     = var.addon_context.aws_region_name,
+    eks_cluster_id = var.addon_context.eks_cluster_id
   })]
 
   helm_config = merge(
@@ -41,7 +40,6 @@ locals {
     create_kubernetes_service_account = true
     kubernetes_service_account        = local.service_account_name
     irsa_iam_policies                 = [aws_iam_policy.cluster_autoscaler.arn]
-    irsa_iam_permissions_boundary     = var.irsa_iam_permissions_boundary
   }
 
   argocd_gitops_config = {

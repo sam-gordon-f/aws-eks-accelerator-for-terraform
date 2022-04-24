@@ -45,22 +45,22 @@ data "aws_region" "current" {}
 data "aws_availability_zones" "available" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 locals {
-  tenant                  = "aws001"  # AWS account name or unique id for tenant
-  environment             = "preprod" # Environment area eg., preprod or prod
-  zone                    = "test"    # Environment with in one sub_tenant or business unit
-  count_availability_zone = (length(data.aws_availability_zones.available.names) <= 3) ? length(data.aws_availability_zones.available.zone_ids) : 3
-  kubernetes_version      = "1.21"
+  tenant          = var.tenant      # AWS account name or unique id for tenant
+  environment     = var.environment # Environment area eg., preprod or prod
+  zone            = var.zone        # Environment with in one sub_tenant or business unit
+  cluster_version = var.cluster_version
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.0.1"
@@ -72,10 +72,10 @@ module "aws_vpc" {
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, local.count_availability_zone) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, local.count_availability_zone) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -94,9 +94,9 @@ module "aws_vpc" {
 
 }
 #---------------------------------------------------------------
-# Example to consume aws-eks-accelerator-for-terraform module
+# Example to consume eks-blueprints module
 #---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+module "eks-blueprints" {
   source = "../../.."
 
   tenant            = local.tenant
@@ -109,7 +109,7 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS CONTROL PLANE VARIABLES
-  kubernetes_version = local.kubernetes_version
+  cluster_version = local.cluster_version
 
   # EKS MANAGED NODE GROUPS
   managed_node_groups = {
@@ -144,10 +144,10 @@ module "aws-eks-accelerator-for-terraform" {
   enable_amazon_prometheus = true
 }
 
-module "kubernetes-addons" {
+module "eks-blueprints-kubernetes-addons" {
   source = "../../../modules/kubernetes-addons"
 
-  eks_cluster_id = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  eks_cluster_id = module.eks-blueprints.eks_cluster_id
   #K8s Add-ons
   enable_metrics_server     = true
   enable_cluster_autoscaler = true
@@ -157,7 +157,7 @@ module "kubernetes-addons" {
   #---------------------------------------
   # Amazon Prometheus Configuration to integrate with Prometheus Server Add-on
   enable_amazon_prometheus             = true
-  amazon_prometheus_workspace_endpoint = module.aws-eks-accelerator-for-terraform.amazon_prometheus_workspace_endpoint
+  amazon_prometheus_workspace_endpoint = module.eks-blueprints.amazon_prometheus_workspace_endpoint
 
   # Enabling Prometheus Server Add-on
   enable_prometheus = true
@@ -187,5 +187,10 @@ module "kubernetes-addons" {
     values     = [templatefile("${path.module}/helm_values/vpa-values.yaml", {})]
   }
 
-  depends_on = [module.aws-eks-accelerator-for-terraform.managed_node_groups]
+  depends_on = [module.eks-blueprints.managed_node_groups]
+}
+
+output "configure_kubectl" {
+  description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
+  value       = module.eks-blueprints.configure_kubectl
 }

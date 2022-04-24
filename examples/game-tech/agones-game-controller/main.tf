@@ -26,11 +26,11 @@ data "aws_region" "current" {}
 data "aws_availability_zones" "available" {}
 
 data "aws_eks_cluster" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 provider "aws" {
@@ -56,14 +56,15 @@ provider "helm" {
 }
 
 locals {
-  tenant      = "aws001"  # AWS account name or unique id for tenant
-  environment = "preprod" # Environment area eg., preprod or prod
-  zone        = "dev"     # Environment with in one sub_tenant or business unit
+  tenant      = var.tenant      # AWS account name or unique id for tenant
+  environment = var.environment # Environment area eg., preprod or prod
+  zone        = var.zone        # Environment with in one sub_tenant or business unit
 
-  kubernetes_version = "1.21"
+  cluster_version = var.cluster_version
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.0.1"
@@ -75,10 +76,10 @@ module "aws_vpc" {
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -96,9 +97,9 @@ module "aws_vpc" {
   }
 }
 #---------------------------------------------------------------
-# Example to consume aws-eks-accelerator-for-terraform module
+# Example to consume eks-blueprints module
 #---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+module "eks-blueprints" {
   source = "../../.."
 
   tenant            = local.tenant
@@ -111,7 +112,7 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS CONTROL PLANE VARIABLES
-  kubernetes_version = local.kubernetes_version
+  cluster_version = local.cluster_version
 
   # EKS MANAGED NODE GROUPS
   managed_node_groups = {
@@ -156,10 +157,10 @@ module "aws-eks-accelerator-for-terraform" {
   }
 }
 
-module "kubernetes-addons" {
-  source                       = "github.com/aws-samples/aws-eks-accelerator-for-terraform//modules/kubernetes-addons"
-  eks_cluster_id               = module.aws-eks-accelerator-for-terraform.eks_cluster_id
-  eks_worker_security_group_id = module.aws-eks-accelerator-for-terraform.worker_security_group_id
+module "eks-blueprints-kubernetes-addons" {
+  source                       = "github.com/aws-ia/terraform-aws-eks-blueprints//modules/kubernetes-addons"
+  eks_cluster_id               = module.eks-blueprints.eks_cluster_id
+  eks_worker_security_group_id = module.eks-blueprints.worker_node_security_group_id
 
   #K8s Add-ons
   enable_metrics_server     = true
@@ -172,13 +173,11 @@ module "kubernetes-addons" {
   enable_agones = true
   # Optional  agones_helm_chart
   agones_helm_config = {
-    name               = "agones"
-    chart              = "agones"
-    repository         = "https://agones.dev/chart/stable"
-    version            = "1.15.0"
-    namespace          = "kube-system"
-    gameserver_minport = 7000 # required for sec group changes to worker nodes
-    gameserver_maxport = 8000 # required for sec group changes to worker nodes
+    name       = "agones"
+    chart      = "agones"
+    repository = "https://agones.dev/chart/stable"
+    version    = "1.21.0"
+    namespace  = "agones-system" # Agones recommends to install in it's own namespace such as `agones-system` as shown here. You can specify any namespace other than `kube-system`
     values = [templatefile("${path.module}/helm_values/agones-values.yaml", {
       expose_udp            = true
       gameserver_namespaces = "{${join(",", ["default", "xbox-gameservers", "xbox-gameservers"])}}"
@@ -187,5 +186,10 @@ module "kubernetes-addons" {
     })]
   }
 
-  depends_on = [module.aws-eks-accelerator-for-terraform.managed_node_groups]
+  depends_on = [module.eks-blueprints.managed_node_groups]
+}
+
+output "configure_kubectl" {
+  description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
+  value       = module.eks-blueprints.configure_kubectl
 }

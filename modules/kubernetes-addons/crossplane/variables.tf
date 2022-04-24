@@ -4,12 +4,6 @@ variable "helm_config" {
   default     = {}
 }
 
-variable "manage_via_gitops" {
-  type        = bool
-  default     = false
-  description = "Determines if the add-on should be managed via GitOps."
-}
-
 variable "aws_provider" {
   description = "AWS Provider config for Crossplane"
   type = object({
@@ -30,6 +24,8 @@ variable "addon_context" {
     eks_oidc_issuer_url            = string
     eks_oidc_provider_arn          = string
     tags                           = map(string)
+    irsa_iam_role_path             = string
+    irsa_iam_permissions_boundary  = string
   })
   description = "Input configuration for the addon"
 }

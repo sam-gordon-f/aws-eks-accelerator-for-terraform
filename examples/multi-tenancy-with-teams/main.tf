@@ -29,12 +29,14 @@ data "aws_region" "current" {}
 
 data "aws_availability_zones" "available" {}
 
+data "aws_caller_identity" "current" {}
+
 data "aws_eks_cluster" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  name = module.eks-blueprints.eks_cluster_id
 }
 
 provider "aws" {
@@ -67,14 +69,15 @@ provider "kubectl" {
 }
 
 locals {
-  tenant      = "teams-account" # AWS account name or unique id for tenant
-  environment = "sandbox"       # Environment area eg., preprod or prod
-  zone        = "demo2"         # Environment with in one sub_tenant or business unit
+  tenant      = var.tenant      # AWS account name or unique id for tenant
+  environment = var.environment # Environment area eg., preprod or prod
+  zone        = var.zone        # Environment with in one sub_tenant or business unit
 
-  kubernetes_version = "1.21"
+  cluster_version = var.cluster_version
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.0.1"
@@ -86,10 +89,10 @@ module "aws_vpc" {
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -108,10 +111,11 @@ module "aws_vpc" {
 
 }
 
-#---------------------------------------------------------------
-# Example to consume aws-eks-accelerator-for-terraform module with Teams (Application and Platform)
-#---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+#-------------------------------------------------------------------------------
+# Example to consume eks-blueprints module with Teams (Application and Platform)
+#-------------------------------------------------------------------------------
+
+module "eks-blueprints" {
   source = "../.."
 
   tenant            = local.tenant
@@ -124,11 +128,7 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS CONTROL PLANE VARIABLES
-  kubernetes_version = local.kubernetes_version
-
-  tags = {
-    "SSP-TF-Teams" = "true"
-  }
+  cluster_version = local.cluster_version
 
   # EKS MANAGED NODE GROUPS
   managed_node_groups = {
@@ -140,14 +140,8 @@ module "aws-eks-accelerator-for-terraform" {
   }
 
   platform_teams = {
-    admin-team-1 = {
-      ## Users Example:
-      # users = [
-      #   "arn:aws:iam::<ACCOUNT_ID>:user/<USERNAME>",
-      #   "arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>"
-      # ]
-      users = [
-      ]
+    admin = {
+      users = [data.aws_caller_identity.current.arn]
     }
   }
 
@@ -174,11 +168,7 @@ module "aws-eks-accelerator-for-terraform" {
       }
       ## Manifests Example:
       manifests_dir = "./manifests-team-red"
-      ## Users Example:
-      # users = [
-      #   "arn:aws:iam::<ACCOUNT_ID>:user/<USERNAME>",
-      #   "arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>"
-      # ]
+      users         = [data.aws_caller_identity.current.arn]
     }
 
     team-blue = {
@@ -197,11 +187,7 @@ module "aws-eks-accelerator-for-terraform" {
       }
       ## Manifests Example:
       manifests_dir = "./manifests-team-blue"
-      ## Users Example:
-      # users = [
-      #   "arn:aws:iam::<ACCOUNT_ID>:user/<USERNAME>",
-      #   "arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>"
-      # ]
+      users         = [data.aws_caller_identity.current.arn]
     }
   }
 }

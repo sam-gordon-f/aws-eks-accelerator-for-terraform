@@ -1,4 +1,3 @@
-
 locals {
   name                 = "cert-manager"
   service_account_name = "${local.name}-sa"
@@ -9,12 +8,11 @@ locals {
     repository  = "https://charts.jetstack.io"
     version     = "v1.7.1"
     namespace   = local.name
-    description = "Argo Rollouts AddOn Helm Chart"
+    description = "Cert Manager Add-on"
     values      = local.default_helm_values
-    timeout     = "600"
   }
 
-  default_helm_values = [templatefile("${path.module}/values.yaml", {})]
+  default_helm_values = []
 
   helm_config = merge(
     local.default_helm_config,
@@ -35,7 +33,7 @@ locals {
   irsa_config = {
     kubernetes_namespace              = local.helm_config["namespace"]
     kubernetes_service_account        = local.service_account_name
-    create_kubernetes_namespace       = true
+    create_kubernetes_namespace       = try(local.helm_config["create_namespace"], true)
     create_kubernetes_service_account = true
   }
 

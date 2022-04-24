@@ -4,62 +4,7 @@
 
 The Fargate profile allows you to declare which pods run on Fargate for Amazon EKS Cluster. This declaration is done through the profile’s selectors. Each profile can have up to five selectors that contain a namespace and optional labels. You must define a namespace for every selector. The label field consists of multiple optional key-value pairs
 
-## Fargate Profile Example
-```hcl
-  #---------------------------------------------------------#
-  # FARGATE PROFILES
-  #---------------------------------------------------------#
-
-  fargate_profiles = {
-    default = {
-      fargate_profile_name = "default"
-      fargate_profile_namespaces = [{
-        namespace = "default"
-        k8s_labels = {
-          Environment = "preprod"
-          Zone        = "dev"
-          env         = "fargate"
-        }
-      }]
-
-      subnet_ids = [] # Provide list of private subnets
-
-      additional_tags = {
-        ExtraTag = "Fargate"
-      }
-    },
-    multi = {
-      fargate_profile_name = "multi-namespaces"
-      fargate_profile_namespaces = [{
-        namespace = "default"
-        k8s_labels = {
-          Environment = "preprod"
-          Zone        = "dev"
-          OS          = "Fargate"
-          WorkerType  = "FARGATE"
-          Namespace   = "default"
-        }
-        },
-        {
-          namespace = "sales"
-          k8s_labels = {
-            Environment = "preprod"
-            Zone        = "dev"
-            OS          = "Fargate"
-            WorkerType  = "FARGATE"
-            Namespace   = "default"
-          }
-      }]
-
-      subnet_ids = [] # Provide list of private subnets
-
-      additional_tags = {
-        ExtraTag = "Fargate"
-      }
-    },
-  } # END OF FARGATE PROFILES
-```
-
+Checkout the usage docs for Fargate Profiles [examples](https://aws-ia.github.io/terraform-aws-eks-blueprints/node-groups/)  
 
 <!--- BEGIN_TF_DOCS --->
 ## Requirements
@@ -92,9 +37,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_context"></a> [context](#input\_context) | Input configuration for Fargate | <pre>object({<br>    eks_cluster_id   = string<br>    aws_partition_id = string<br>    tags             = map(string)<br>  })</pre> | n/a | yes |
+| <a name="input_context"></a> [context](#input\_context) | Input configuration for Fargate | <pre>object({<br>    eks_cluster_id   = string<br>    aws_partition_id = string<br>    #IAM<br>    iam_role_path                 = string<br>    iam_role_permissions_boundary = string<br>    tags                          = map(string)<br>  })</pre> | n/a | yes |
 | <a name="input_fargate_profile"></a> [fargate\_profile](#input\_fargate\_profile) | Map of maps of `eks_node_groups` to create | `any` | `{}` | no |
-| <a name="input_path"></a> [path](#input\_path) | IAM resource path, e.g. /dev/ | `string` | `"/"` | no |
 
 ## Outputs
 

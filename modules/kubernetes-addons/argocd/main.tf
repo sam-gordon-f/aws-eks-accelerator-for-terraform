@@ -1,8 +1,9 @@
 module "helm_addon" {
-  source        = "../helm-addon"
-  helm_config   = local.helm_config
-  irsa_config   = null
-  addon_context = var.addon_context
+  source               = "../helm-addon"
+  helm_config          = local.helm_config
+  irsa_config          = null
+  set_sensitive_values = local.set_sensitive
+  addon_context        = var.addon_context
 
   depends_on = [kubernetes_namespace_v1.this]
 }
@@ -12,7 +13,7 @@ resource "kubernetes_namespace_v1" "this" {
     name = local.helm_config["namespace"]
 
     labels = {
-      "app.kubernetes.io/managed-by" = "terraform-ssp-amazon-eks"
+      "app.kubernetes.io/managed-by" = "terraform-eks-blueprints"
     }
   }
 }
@@ -65,11 +66,11 @@ resource "helm_release" "argocd_application" {
       { repo_url = each.value.repo_url },
       each.value.values,
       local.global_application_values,
-      each.value.add_on_application ? var.add_on_config : {}
+      each.value.add_on_application ? var.addon_config : {}
     ))
   }
 
-  # Desintation Config.
+  # Destination Config.
   set {
     name  = "destination.server"
     value = each.value.destination

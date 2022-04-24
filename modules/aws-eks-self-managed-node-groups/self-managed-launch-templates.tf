@@ -21,15 +21,15 @@ module "launch_template_self_managed_ng" {
       http_tokens                 = var.context.http_tokens
       http_put_response_hop_limit = var.context.http_put_response_hop_limit
 
+      service_ipv6_cidr = var.context.service_ipv6_cidr
+      service_ipv4_cidr = var.context.service_ipv4_cidr
+
       block_device_mappings = local.self_managed_node_group["block_device_mappings"]
 
       network_interfaces = [
         {
-          public_ip = local.self_managed_node_group["public_ip"]
-          security_groups = (
-            local.self_managed_node_group["create_worker_security_group"] == true
-            ? compact(flatten([[aws_security_group.self_managed_ng[0].id], var.context.worker_additional_security_group_ids]))
-          : compact(flatten([[var.context.worker_security_group_id], var.context.worker_additional_security_group_ids])))
+          public_ip       = local.self_managed_node_group["public_ip"]
+          security_groups = var.context.worker_security_group_ids
         }
       ]
     }

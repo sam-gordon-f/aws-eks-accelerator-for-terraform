@@ -8,7 +8,7 @@ This shows an example of how to automate the build and deployment of an IaC code
 ### Step 1: Clone this repo
 
 ```
-git@github.com:aws-samples/aws-eks-accelerator-for-terraform.git
+git@github.com:aws-ia/terraform-aws-eks-blueprints.git
 ```
 
 ## Step 2: Create a new git repo in your GitLab group and copy files from examples/advanced/gitlab-ci-cd folder to the root of your new GitLab repo
@@ -25,7 +25,7 @@ git@github.com:aws-samples/aws-eks-accelerator-for-terraform.git
 
 ## Step 4: Update variables in input.tfvars file  
    1. Update tenant,environment,zone as per your requirement
-   2. Update kubernetes_version to any version > "1.20"
+   2. Update cluster_version to any version > "1.20"
    3. Update CIDR of your VPC, vpc_cidcr = "10.2.0.0/16"
 
 
@@ -72,8 +72,8 @@ Manually trigger the `tf-destroy` stage in the GitLab Ci/CD pipeline to destroy 
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_aws-eks-accelerator-for-terraform"></a> [aws-eks-accelerator-for-terraform](#module\_aws-eks-accelerator-for-terraform) | github.com/aws-samples/aws-eks-accelerator-for-terraform | n/a |
 | <a name="module_aws_vpc"></a> [aws\_vpc](#module\_aws\_vpc) | terraform-aws-modules/vpc/aws | 3.11.3 |
+| <a name="module_eks-blueprints"></a> [eks-blueprints](#module\_eks-blueprints) | github.com/aws-ia/terraform-aws-eks-blueprints | n/a |
 
 ## Resources
 
@@ -88,8 +88,8 @@ Manually trigger the `tf-destroy` stage in the GitLab Ci/CD pipeline to destroy 
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | n/a | `string` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment area eg., preprod or prod | `string` | n/a | yes |
-| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | n/a | `string` | n/a | yes |
 | <a name="input_tenant"></a> [tenant](#input\_tenant) | AWS account name or unique id for tenant | `string` | n/a | yes |
 | <a name="input_terraform_version"></a> [terraform\_version](#input\_terraform\_version) | n/a | `string` | n/a | yes |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | n/a | `string` | n/a | yes |
@@ -97,6 +97,8 @@ Manually trigger the `tf-destroy` stage in the GitLab Ci/CD pipeline to destroy 
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_configure_kubectl"></a> [configure\_kubectl](#output\_configure\_kubectl) | Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig |
 
 <!--- END_TF_DOCS --->

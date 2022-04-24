@@ -2,6 +2,7 @@ locals {
   name                 = "kubernetes-dashboard"
   service_account_name = "eks-admin"
   namespace            = "kube-system"
+
   default_helm_config = {
     name        = local.name
     chart       = local.name
@@ -13,14 +14,12 @@ locals {
     timeout     = "1200"
   }
 
-  default_helm_values = [templatefile("${path.module}/values.yaml", {
-    sa-name = local.service_account_name
-  })]
-
   helm_config = merge(
     local.default_helm_config,
     var.helm_config
   )
+
+  default_helm_values = []
 
   set_values = [
     {
@@ -34,13 +33,10 @@ locals {
   ]
 
   irsa_config = {
-    kubernetes_namespace              = local.namespace
+    kubernetes_namespace              = local.helm_config["namespace"]
     kubernetes_service_account        = local.service_account_name
     create_kubernetes_namespace       = false
     create_kubernetes_service_account = true
-    iam_role_path                     = "/"
-    irsa_iam_policies                 = var.irsa_policies
-    irsa_iam_permissions_boundary     = var.irsa_permissions_boundary
   }
 
   argocd_gitops_config = {
