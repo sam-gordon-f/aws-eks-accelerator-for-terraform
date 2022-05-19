@@ -28,7 +28,9 @@ phases:
       - export TEST_ERRORS=`jq '.[0].failures | length // 0' $PROJECT_ROOT/reports/rego.json`
         # display test results
       - echo "rego, $TEST_STATUS"
+      - echo "json output"
       - cat $PROJECT_ROOT/reports/rego.json
+      - echo "xml output"
       - cat $PROJECT_ROOT/reports/rego.xml
   post_build:
     commands:

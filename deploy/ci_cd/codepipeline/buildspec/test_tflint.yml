@@ -25,11 +25,15 @@ phases:
         # change to directory where tf resides
       - cd $TF_PATH
       - tflint --format junit > $PROJECT_ROOT/reports/tflint.xml; TEST_STATUS=$?
+      - tflint --format json > $PROJECT_ROOT/reports/tflint.json; TEST_STATUS_IGNORE=$?
         # set codepipeine errors
-      - export TEST_ERRORS=`tflint --format json --module | jq -r '.errors | length'`
+      - export TEST_ERRORS=`cat $PROJECT_ROOT/reports/tflint.json | jq -r '.errors | length'`
       - cd $PROJECT_ROOT
-      - echo "tfsec, $TEST_STATUS"
+      - echo "tflint, $TEST_STATUS"
+      - echo "xml output"
       - cat $PROJECT_ROOT/reports/tflint.xml
+      - echo "json output"
+      - cat $PROJECT_ROOT/reports/tflint.json
   post_build:
     commands:
       - echo "Post Build phase"

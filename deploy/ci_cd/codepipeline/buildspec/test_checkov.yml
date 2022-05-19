@@ -24,8 +24,10 @@ phases:
       - export TEST_ERRORS=`jq '.summary.failed' $PROJECT_ROOT/reports/checkov.json`
         # display test results
       - echo "checkov, $TEST_STATUS"
-      - cat $PROJECT_ROOT/reports/checkov.json
+      - echo "xml output"
       - cat $PROJECT_ROOT/reports/checkov.xml
+      - echo "json output"
+      - cat $PROJECT_ROOT/reports/checkov.json
   post_build:
     commands:
       - echo "Post Build phase"

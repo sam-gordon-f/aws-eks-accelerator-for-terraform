@@ -20,12 +20,15 @@ phases:
       - mkdir $PROJECT_ROOT/reports
       - terrascan init
       - terrascan scan -o junit-xml -d $TF_PATH > $PROJECT_ROOT/reports/terrascan.xml; TEST_STATUS=$?
-      - terrascan scan -o json -d $TF_PATH > $PROJECT_ROOT/reports/terrascan.json; TEST_STATUS=$?
+      - terrascan scan -o json -d $TF_PATH > $PROJECT_ROOT/reports/terrascan.json; TEST_STATUS_IGNORE=$?
         # set codepipeine errors
       - export TEST_ERRORS=`less $PROJECT_ROOT/reports/terrascan.json | jq '.results.scan_summary.violated_policies'`
         # display test results
       - echo "terrascan, $TEST_STATUS"
+      - echo "xml output"
       - cat $PROJECT_ROOT/reports/terrascan.xml
+      - echo "json output"
+      # - cat $PROJECT_ROOT/reports/terrascan.json
       - less $PROJECT_ROOT/reports/terrascan.json | jq '.results.scan_summary'
       # - cat $PROJECT_ROOT/reports/terrascan.json
   post_build:

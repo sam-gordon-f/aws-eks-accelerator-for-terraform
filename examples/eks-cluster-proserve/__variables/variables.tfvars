@@ -12,23 +12,6 @@ eks_cluster = {
     }
   }
   cluster_version = "1.21"
-  compute = {
-    nodegroups = {
-      aws_managed  = {
-        mg_4 = {
-          node_group_name = "managed-ondemand"
-          instance_types  = ["m5.large"]
-          subnet_ids      = [
-            "subnet-058c6d2c63ef6dbd7",
-            "subnet-029d9418d5be4ad2b",
-            "subnet-0f4fdef51814b866a"
-          ]
-        }
-      }
-      self_managed = {}
-    }
-    fargate_profiles = {}
-  }
   map_roles = [
       # allow Single sign on "administrators" the ability to interact with cluster
     {
@@ -53,6 +36,42 @@ eks_cluster = {
   }
 }
 
+eks_compute = {
+  nodegroups = {
+    aws_managed  = {
+      mg_4 = {
+        node_group_name = "managed-ondemand"
+        instance_types  = ["m5.large"]
+        subnet_ids      = [
+          "subnet-058c6d2c63ef6dbd7",
+          "subnet-029d9418d5be4ad2b",
+          "subnet-0f4fdef51814b866a"
+        ]
+      }
+    }
+    self_managed = {}
+  }
+  fargate_profiles = {
+    default = {
+      additional_tags = {}
+      fargate_profile_name = "default"
+      fargate_profile_namespaces = [{
+        namespace = "default"
+        k8s_labels = {
+          Environment = "preprod"
+          Zone        = "dev"
+          env         = "fargate"
+        }
+      }]
+      subnet_ids = [
+        "subnet-058c6d2c63ef6dbd7",
+        "subnet-029d9418d5be4ad2b",
+        "subnet-0f4fdef51814b866a"
+      ]
+    }
+  }
+}
+
 eks_addons = {
   metrics_server = {
     enable = true
@@ -69,9 +88,29 @@ eks_addons = {
   }
 }
 
+eks_teams = {
+  team1 = {
+    labels = {
+      "bsbcc": "example",
+      "appname": "example",
+      "testingNewLabel": "blah"
+    }
+    compute_quota = {
+      "requests.cpu": "1000m",
+      "requests.memory": "4Gi",
+      "limits.cpu": "2000m",
+      "limits.memory": "8Gi",
+    }
+    object_quota = { 
+      "pods": "10",
+      "secrets": "10",
+      "services": "10"
+    }
+  }
+}
+
 general = {
   zone = "dev"
 }
 
 region = "ap-southeast-2"
-

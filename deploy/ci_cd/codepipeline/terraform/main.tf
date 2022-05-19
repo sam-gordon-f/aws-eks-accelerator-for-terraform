@@ -140,6 +140,11 @@ resource "aws_lambda_function" "post-codepipeline-lambda" {
 # Codepipeline Resources
 ####
 
+resource "aws_sns_topic" "codepipeline_notifications" {
+  display_name = format("%s-codepipeline-approvals", var.environment)
+  tags = var.tags
+}
+
 resource "aws_s3_bucket" "artefacts" {
   bucket = format("%s-%s-codepipeline-artefacts-%s", data.aws_caller_identity.current.account_id, data.aws_region.current.name, var.environment)
   acl    = "private"
@@ -975,10 +980,8 @@ resource "aws_codepipeline" "this" {
         provider = "Manual"
         version  = "1"
         configuration = {
-          # NotificationArn = "${var.approve_sns_arn}"
+          NotificationArn = aws_sns_topic.codepipeline_notifications.arn
           CustomData = "tfsec errors: #{build_test_tfsec.TEST_ERRORS}\ntflint errors: #{build_test_tflint.TEST_ERRORS}\ncheckov errors: #{build_test_checkov.TEST_ERRORS}\nterrascan failures: #{build_test_terrascan.TEST_ERRORS}\nrego failures: #{build_test_rego.TEST_ERRORS}"
-          # ExternalEntityLink = "${var.approve_url}"    
-          # external_entity_link = "https://#{TFSEC.Region}.console.aws.amazon.com/codesuite/codebuild/"+core.Stack.of(self).account+"/projects/#{TFSEC.BuildID}/build/#{TFSEC.BuildID}%3A#{TFSEC.BuildTag}/?region=#{TFSEC.Region}",
         }
       }
     }
@@ -989,7 +992,7 @@ resource "aws_codepipeline" "this" {
       provider = "Manual"
       version  = "1"
       configuration = {
-        # NotificationArn = "${var.approve_sns_arn}"
+        NotificationArn = aws_sns_topic.codepipeline_notifications.arn
         CustomData = "Please review the tf plan from the below link"
         ExternalEntityLink = join("", [
           "https://",

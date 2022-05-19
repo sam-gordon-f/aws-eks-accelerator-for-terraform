@@ -9,10 +9,10 @@ locals {
     ])
     compute = {
       nodegroups = {
-        aws_managed = var.eks_cluster.compute.nodegroups.aws_managed
-        self_managed = var.eks_cluster.compute.nodegroups.self_managed
+        aws_managed = var.eks_compute.nodegroups.aws_managed
+        self_managed = var.eks_compute.nodegroups.self_managed
       } 
-      fargate_profiles = var.eks_cluster.compute.fargate_profiles
+      fargate_profiles = var.eks_compute.fargate_profiles
     }
   }
 }
