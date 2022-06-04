@@ -22,7 +22,7 @@ module "eks_cluster" {
 }
 
 ####
-# b. deploy all non-gitops style applications to the cluster
+# b. deploy all "non-gitops" applications to the cluster
 ####
 
 module "eks_cluster_addons" {

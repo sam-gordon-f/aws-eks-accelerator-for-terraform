@@ -91,20 +91,20 @@ eks_addons = {
 eks_teams = {
   team1 = {
     labels = {
-      "bsbcc": "example",
-      "appname": "example",
-      "testingNewLabel": "blah"
+      "bsbcc" = "example",
+      "appname" = "example",
+      "testingNewLabel" = "blah"
     }
     compute_quota = {
-      "requests.cpu": "1000m",
-      "requests.memory": "4Gi",
-      "limits.cpu": "2000m",
-      "limits.memory": "8Gi",
+      "requests.cpu" = "1000m",
+      "requests.memory" = "4Gi",
+      "limits.cpu" = "2000m",
+      "limits.memory" = "8Gi",
     }
     object_quota = { 
-      "pods": "10",
-      "secrets": "10",
-      "services": "10"
+      "pods" = "10",
+      "secrets" = "10",
+      "services" = "10"
     }
   }
 }
