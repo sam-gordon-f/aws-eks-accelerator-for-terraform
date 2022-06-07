@@ -26,10 +26,8 @@ variable "eks_teams" {
 
 variable "general" {
   type = object({
+    region = string
+    tags = map(string)
     zone = string
   })
-}
-
-variable "region" {
-  type = string
 }

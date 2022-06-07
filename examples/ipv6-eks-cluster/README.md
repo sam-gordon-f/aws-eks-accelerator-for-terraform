@@ -1,73 +1,84 @@
 # IPv6 EKS Cluster
 
 This example deploys VPC, Subnets and EKS Cluster with IPv6 networking enabled
- - Creates a new sample VPC with IPv6, 3 Private Subnets and 3 Public Subnets
- - Creates Internet gateway for Public Subnets and NAT Gateway for Private Subnets
- - Creates EKS Cluster Control plane with one managed node group
+
+- Creates a new sample VPC with IPv6, 3 Private Subnets and 3 Public Subnets
+- Creates Internet gateway for Public Subnets and NAT Gateway for Private Subnets
+- Creates EKS Cluster Control plane with one managed node group
 
 Checkout EKS the documentation for more details about [IPv6](https://docs.aws.amazon.com/eks/latest/userguide/cni-ipv6.html)
 
 ## How to Deploy
+
 ### Prerequisites:
+
 Ensure that you have installed the following tools in your Mac or Windows Laptop before start working with this module and run Terraform Plan and Apply
+
 1. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-3. [Kubectl](https://Kubernetes.io/docs/tasks/tools/)
-4. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+2. [Kubectl](https://Kubernetes.io/docs/tasks/tools/)
+3. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
 
 ### Deployment Steps
-#### Step1: Clone the repo using the command below
 
-```shell script
+#### Step 1: Clone the repo using the command below
+
+```sh
 git clone https://github.com/aws-ia/terraform-aws-eks-blueprints.git
 ```
 
-#### Step2: Run Terraform INIT
+#### Step 2: Run Terraform INIT
+
 Initialize a working directory with configuration files
 
-```shell script
+```sh
 cd examples/ipv6-eks-cluster/
 terraform init
 ```
 
-#### Step3: Run Terraform PLAN
+#### Step 3: Run Terraform PLAN
+
 Verify the resources created by this execution
 
-```shell script
+```sh
 export AWS_REGION=<ENTER YOUR REGION>   # Select your own region
 terraform plan
 ```
 
-#### Step4: Finally, Terraform APPLY
-to create resources
+#### Step 4: Finally, Terraform APPLY
 
-```shell script
+**Deploy the pattern**
+
+```sh
 terraform apply
 ```
-Enter `yes` to apply
 
-#### Step5: Verify EC2 instances running with IPv6 support
+Enter `yes` to apply.
 
-```shell script
-aws ec2 describe-instances --filters "Name=tag:eks:cluster-name,Values=aws-preprod-cplane-eks" --query "Reservations[].Instances[? State.Name == 'running' ][].NetworkInterfaces[].Ipv6Addresses" --output table
+#### Step 5: Verify EC2 instances running with IPv6 support
+
+```sh
+aws ec2 describe-instances --filters "Name=tag:eks:cluster-name,Values=ipv6-preprod-dev-eks" --query "Reservations[].Instances[? State.Name == 'running' ][].NetworkInterfaces[].Ipv6Addresses" --output table
 ```
 
 ### Configure `kubectl` and test cluster
+
 EKS Cluster details can be extracted from terraform output or from AWS Console to get the name of cluster.
 This following command used to update the `kubeconfig` in your local machine where you run kubectl commands to interact with your EKS Cluster.
 
-#### Step6: Run `update-kubeconfig` command
+#### Step 6: Run `update-kubeconfig` command
 
 `~/.kube/config` file gets updated with cluster details and certificate from the below command
 
-```shell script
+```sh
 aws eks --region <enter-your-region> update-kubeconfig --name <cluster-name>
 ```
 
-#### Step7: List all the PODS running in `kube-system` and observe the **IP allocated**
+#### Step 7: List all the PODS running in `kube-system` and observe the **IP allocated**
 
-```shell script
-kubectl get pods -n kube-system  -o wide  
+```sh
+kubectl get pods -n kube-system  -o wide
 ```
+
 Output
 
         NAME                                           READY   STATUS    RESTARTS   AGE    IP                                      NODE                                        NOMINATED NODE   READINESS GATES
@@ -81,56 +92,20 @@ Output
         kube-proxy-nzfrq                               1/1     Running   0          3h1m   2a05:d018:434:7703:b3eb:2aa:aa4a:c838   ip-10-0-11-186.eu-west-1.compute.internal   <none>           <none>
 
 
-## How to Destroy
-The following command destroys the resources created by `terraform apply`
+## Cleanup
 
-```shell script
-cd examples/eks-cluster-with-new-vpc
-terraform destroy --auto-approve
+To clean up your environment, destroy the Terraform modules in reverse order.
+
+Destroy the Kubernetes Add-ons, EKS cluster with Node groups and VPC
+
+```sh
+terraform destroy -target="module.eks_blueprints_kubernetes_addons" -auto-approve
+terraform destroy -target="module.eks_blueprints" -auto-approve
+terraform destroy -target="module.vpc" -auto-approve
 ```
 
+Finally, destroy any additional resources that are not in the above modules
 
-<!--- BEGIN_TF_DOCS --->
-## Requirements
-
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.1 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.66.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.4.1 |
-| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.6.1 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.66.0 |
-
-## Modules
-
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_aws_vpc"></a> [aws\_vpc](#module\_aws\_vpc) | terraform-aws-modules/vpc/aws | v3.13.0 |
-| <a name="module_eks-blueprints"></a> [eks-blueprints](#module\_eks-blueprints) | ../.. | n/a |
-| <a name="module_eks-blueprints-kubernetes-addons"></a> [eks-blueprints-kubernetes-addons](#module\_eks-blueprints-kubernetes-addons) | ../../modules/kubernetes-addons | n/a |
-
-## Resources
-
-| Name | Type |
-|------|------|
-| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
-| [aws_eks_cluster.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
-| [aws_eks_cluster_auth.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
-
-## Inputs
-
-No inputs.
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_configure_kubectl"></a> [configure\_kubectl](#output\_configure\_kubectl) | Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig |
-
-<!--- END_TF_DOCS --->
+```sh
+terraform destroy -auto-approve
+```

@@ -21,12 +21,6 @@ variable "auto_scaling_group_names" {
   type        = list(string)
 }
 
-variable "node_groups_iam_role_arn" {
-  type        = list(string)
-  default     = []
-  description = "Node Groups IAM role ARNs"
-}
-
 variable "tags" {
   type        = map(string)
   default     = {}
@@ -45,6 +39,21 @@ variable "irsa_iam_permissions_boundary" {
   description = "IAM permissions boundary for IRSA roles"
 }
 
+variable "eks_oidc_provider" {
+  type        = string
+  description = "The OpenID Connect identity provider (issuer URL without leading `https://`)"
+}
+
+variable "eks_cluster_endpoint" {
+  type        = string
+  description = "Endpoint for your Kubernetes API server"
+}
+
+variable "eks_cluster_version" {
+  type        = string
+  description = "The Kubernetes version for the cluster"
+}
+
 #-----------EKS MANAGED ADD-ONS------------
 variable "enable_ipv6" {
   description = "Enable Ipv6 network. Attaches new VPC CNI policy to the IRSA role"
@@ -58,8 +67,26 @@ variable "amazon_eks_vpc_cni_config" {
   default     = {}
 }
 
+variable "enable_amazon_eks_coredns" {
+  description = "Enable Amazon EKS CoreDNS add-on"
+  type        = bool
+  default     = false
+}
+
 variable "amazon_eks_coredns_config" {
-  description = "ConfigMap for Amazon CoreDNS EKS add-on"
+  description = "Configuration for Amazon CoreDNS EKS add-on"
+  type        = any
+  default     = {}
+}
+
+variable "enable_self_managed_coredns" {
+  description = "Enable self-managed CoreDNS add-on"
+  type        = bool
+  default     = false
+}
+
+variable "self_managed_coredns_helm_config" {
+  description = "Self-managed CoreDNS Helm chart config"
   type        = any
   default     = {}
 }
@@ -80,12 +107,6 @@ variable "enable_amazon_eks_vpc_cni" {
   type        = bool
   default     = false
   description = "Enable VPC CNI add-on"
-}
-
-variable "enable_amazon_eks_coredns" {
-  type        = bool
-  default     = false
-  description = "Enable CoreDNS add-on"
 }
 
 variable "enable_amazon_eks_kube_proxy" {
@@ -247,6 +268,12 @@ variable "amazon_prometheus_workspace_endpoint" {
   type        = string
   default     = null
   description = "AWS Managed Prometheus WorkSpace Endpoint"
+}
+
+variable "amazon_prometheus_workspace_region" {
+  type        = string
+  default     = null
+  description = "AWS Managed Prometheus WorkSpace Region"
 }
 
 #-----------PROMETHEUS-------------
@@ -502,6 +529,30 @@ variable "cert_manager_helm_config" {
   default     = {}
 }
 
+variable "cert_manager_irsa_policies" {
+  type        = list(string)
+  description = "Additional IAM policies for a IAM role for service accounts"
+  default     = []
+}
+
+variable "cert_manager_domain_names" {
+  description = "Domain names of the Route53 hosted zone to use with cert-manager."
+  default     = []
+  type        = list(string)
+}
+
+variable "cert_manager_install_letsencrypt_issuers" {
+  type        = bool
+  default     = true
+  description = "Install Let's Encrypt Cluster Issuers."
+}
+
+variable "cert_manager_letsencrypt_email" {
+  type        = string
+  default     = ""
+  description = "Email address for expiration emails from Let's Encrypt."
+}
+
 #-----------Argo Rollouts ADDON-------------
 variable "enable_argo_rollouts" {
   type        = bool
@@ -622,12 +673,6 @@ variable "kubernetes_dashboard_helm_config" {
   description = "Kubernetes Dashboard Helm Chart config"
 }
 
-variable "kubernetes_dashboard_irsa_policies" {
-  type        = list(string)
-  default     = []
-  description = "IAM policy ARNs for Kubernetes Dashboard IRSA"
-}
-
 #-----------HashiCorp Vault-------------
 variable "enable_vault" {
   type        = bool
@@ -667,8 +712,91 @@ variable "yunikorn_helm_config" {
   description = "YuniKorn Helm Chart config"
 }
 
-variable "yunikorn_irsa_policies" {
+#-----------AWS PCA ISSUER-------------
+variable "enable_aws_privateca_issuer" {
+  type        = bool
+  default     = false
+  description = "Enable PCA Issuer"
+}
+
+variable "aws_privateca_issuer_helm_config" {
+  type        = any
+  description = "PCA Issuer Helm Chart config"
+  default     = {}
+}
+
+variable "aws_privateca_acmca_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of AWS ACM PCA"
+}
+
+variable "aws_privateca_issuer_irsa_policies" {
   type        = list(string)
   default     = []
-  description = "IAM policy ARNs for Yunikorn IRSA"
+  description = "IAM policy ARNs for AWS ACM PCA IRSA"
+}
+
+#-----------OPENTELEMETRY OPERATOR-------------
+variable "enable_opentelemetry_operator" {
+  type        = bool
+  default     = false
+  description = "Enable opentelemetry operator add-on"
+}
+
+variable "opentelemetry_operator_helm_config" {
+  type        = any
+  default     = {}
+  description = "Opentelemetry Operator Helm Chart config"
+}
+
+#-----------AWS Observability patterns-------------
+#-----------Java/Jmx Use case-------------
+variable "enable_adot_collector_java" {
+  type        = bool
+  default     = false
+  description = "Enable metrics for JMX workloads"
+}
+
+variable "adot_collector_java_helm_config" {
+  type        = any
+  default     = {}
+  description = "ADOT Collector Java Helm Chart config"
+}
+
+variable "enable_adot_collector_haproxy" {
+  type        = bool
+  default     = false
+  description = "Enable metrics for HAProxy workloads"
+}
+
+variable "adot_collector_haproxy_helm_config" {
+  type        = any
+  default     = {}
+  description = "ADOT Collector HAProxy Helm Chart config"
+}
+
+variable "enable_adot_collector_memcached" {
+  type        = bool
+  default     = false
+  description = "Enable metrics for Memcached workloads"
+}
+
+variable "adot_collector_memcached_helm_config" {
+  type        = any
+  default     = {}
+  description = "ADOT Collector Memcached Helm Chart config"
+}
+
+#-----------Nginx Use case-------------
+variable "enable_adot_collector_nginx" {
+  type        = bool
+  default     = false
+  description = "Enable metrics for Nginx workloads"
+}
+
+variable "adot_collector_nginx_helm_config" {
+  type        = any
+  default     = {}
+  description = "ADOT Collector Nginx Helm Chart config"
 }

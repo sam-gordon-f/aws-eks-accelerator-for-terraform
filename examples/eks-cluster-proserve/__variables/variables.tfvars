@@ -73,7 +73,16 @@ eks_compute = {
 }
 
 eks_addons = {
-  metrics_server = {
+  amazon_eks_aws_ebs_csi_driver = {
+    enable = true
+  }
+  amazon_eks_vpc_cni = {
+    enable = true
+  }
+  amazon_eks_coredns = {
+    enable = true
+  }
+  amazon_eks_kube_proxy = {
     enable = true
   }
   argocd = {
@@ -83,34 +92,88 @@ eks_addons = {
         path                = "chart"
         repo_url            = "https://github.com/aws-samples/eks-blueprints-add-ons.git"
         add_on_application  = true
+          # the below is a secretsmanager:secret reference for accessing private repositories 
+        # admin_password_secret_name = "password"
       }
     }
+    argocd_manage_add_ons = true
+  }
+  aws_efs_csi_driver = {
+    enable = false
+  }
+  aws_load_balancer_controller = {
+    enable = true
+  }
+  cluster_autoscaler = {
+    enable = false
+  }
+  metrics_server = {
+    enable = true
   }
 }
 
 eks_teams = {
   team1 = {
-    labels = {
-      "bsbcc" = "example",
-      "appname" = "example",
-      "testingNewLabel" = "blah"
-    }
     compute_quota = {
       "requests.cpu" = "1000m",
       "requests.memory" = "4Gi",
       "limits.cpu" = "2000m",
-      "limits.memory" = "8Gi",
+      "limits.memory" = "8Gi"
+    }
+    labels = {
+      bsbcc = "example",
+      appname = "example",
+      testingNewLabel = "blah"
+    }
+    network_policies = {
+      policy1 = {
+        policy_types = ["Ingress"]
+      },
+      policy2 = {
+        policy_types = ["Egress"]
+      }
     }
     object_quota = { 
-      "pods" = "10",
-      "secrets" = "10",
-      "services" = "10"
+      pods = "10",
+      secrets = "10",
+      services = "10"
+    }
+  }
+  team2 = {
+    compute_quota = {
+      "requests.cpu" = "1000m",
+      "requests.memory" = "4Gi",
+      "limits.cpu" = "2000m",
+      "limits.memory" = "8Gi"
+    }
+    labels = {
+      bsbcc = "example",
+      appname = "example",
+      testingNewLabel = "blah2"
+    }
+    network_policies = {
+      policy1 = {
+        policy_types = ["Ingress"]
+      }
+      policy2 = {
+        policy_types = ["Egress"]
+      }
+      policy3 = {
+        policy_types = ["Egress"]
+      }
+    }
+    object_quota = { 
+      pods = "10",
+      secrets = "10",
+      services = "10"
     }
   }
 }
 
 general = {
+  region = "ap-southeast-2"
+  tags = {
+    testing-tag-1 = "first"
+  },
   zone = "dev"
 }
-
-region = "ap-southeast-2"

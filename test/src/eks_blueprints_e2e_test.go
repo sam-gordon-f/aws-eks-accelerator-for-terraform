@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -40,9 +41,9 @@ var (
 		"awsRegion" : "us-west-2"}*/
 
 	destroyModules = []string{
-		"module.kubernetes_addons",
+		"module.eks_blueprints_kubernetes_addons",
 		"module.eks_blueprints",
-		"module.aws_vpc",
+		"module.vpc",
 		"full_destroy",
 	}
 
@@ -119,7 +120,10 @@ func TestEksBlueprintsE2E(t *testing.T) {
 			inputTfOptions := &terraform.Options{
 				/*The path to where our Terraform code is located*/
 				TerraformDir: tempExampleFolder,
-				VarFiles:     []string{testCase.name + ".tfvars"}, // The var file paths to pass to Terraform commands using -var-file option.
+				Vars: map[string]interface{}{
+					"cluster_name": "aws-terra-test-eks",
+				},
+				// VarFiles:     []string{testCase.name + ".tfvars"}, // The var file paths to pass to Terraform commands using -var-file option.
 				//BackendConfig: map[string]interface{}{
 				//	"bucket": S3BackendConfig["bucketName"],
 				//	"key":    S3BackendConfig["s3Prefix"]+testCase.name,
@@ -137,7 +141,10 @@ func TestEksBlueprintsE2E(t *testing.T) {
 						destroyTFOptions := &terraform.Options{
 							/*The path to where our Terraform code is located*/
 							TerraformDir: tempExampleFolder,
-							VarFiles:     []string{testCase.name + ".tfvars"}, // The var file paths to pass to Terraform commands using -var-file option.
+							Vars: map[string]interface{}{
+								"cluster_name": "aws-terra-test-eks",
+							},
+							// VarFiles:     []string{testCase.name + ".tfvars"}, // The var file paths to pass to Terraform commands using -var-file option.
 							//BackendConfig: map[string]interface{}{
 							//	"bucket": S3BackendConfig["bucketName"],
 							//	"key":    S3BackendConfig["s3Prefix"]+testCase.name,
@@ -148,6 +155,7 @@ func TestEksBlueprintsE2E(t *testing.T) {
 						}
 						terraformOptions := getTerraformOptions(t, destroyTFOptions)
 						terraform.Destroy(t, terraformOptions)
+						time.Sleep(2 * time.Minute) // Workaround for cleaning up dangling ENIs
 					} else {
 						terraformOptions := getTerraformOptions(t, inputTfOptions)
 						terraform.Destroy(t, terraformOptions)
