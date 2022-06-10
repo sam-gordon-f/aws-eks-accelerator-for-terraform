@@ -74,37 +74,123 @@ resource "kubernetes_network_policy" "network_policy" {
     name      = "${each.value.namespace}-${each.value.name}"
     namespace = each.value["namespace"]
   }
+
   spec {
-    egress {}
-    # dynamic "egress" {
-    #   for_each = each.value["egress"]
-    #   content {}
-    # }
+    dynamic "egress" {
+      for_each = lookup(each.value, "egress", {})
+      content {
+        dynamic "ports" {
+          for_each = lookup(egress, "ports", {})
+          content {
+            port = lookup(ports, "port", {})
+            protocol = lookup(ports, "protocol", {})
+          }
+        }
+        dynamic "to" {
+          for_each = lookup(egress, "to", {})
+          content {
+            dynamic "ip_block" {
+              for_each = lookup(to, "ip_block", {})
+              content {
+                cidr = lookup(ip_block, "cidr", null)
+                except = lookup(ip_block, "except", null)
+              }
+            }
+            dynamic "namespace_selector" {
+              for_each = lookup(to, "namespace_selector", {})
+              content {
+                dynamic "match_expressions" {
+                  for_each = lookup(namespace_selector, "match_expressions", {})
+                  content {
+                    key = lookup(match_expressions, "key", null)
+                    operator = lookup(match_expressions, "operator", null)
+                    values = lookup(match_expressions, "values", null)
+                  }
+                }
+                match_labels = lookup(namespace_selector, "match_labels", {})
+              }
+            }
+            dynamic "pod_selector" {
+              for_each = lookup(to, "pod_selector", {})
+              content {
+                dynamic "match_expressions" {
+                  for_each = lookup(pod_selector, "match_expressions", {})
+                  content {
+                    key = lookup(match_expressions, "key", null)
+                    operator = lookup(match_expressions, "operator", null)
+                    values = lookup(match_expressions, "values", null)
+                  }
+                }
+                match_labels = lookup(pod_selector, "match_labels")
+              }
+            }
+          }
+        }
+      } 
+    }
 
-    ingress {}
-    # dynamic "ingress" {
-    #   for_each = each.value["ingress"]
-    #   content {}
-    # }
+    dynamic "ingress" {
+      for_each = lookup(each.value, "ingress", {})
+      content {
+        dynamic "from" {
+          for_each = lookup(ingress, "from", {})
+          content {
+            dynamic "namespace_selector" {
+              for_each = lookup(from, "namespace_selector", {})
+              content {
+                dynamic "match_expressions" {
+                  for_each = lookup(namespace_selector, "match_expressions", {})
+                  content {
+                    key = lookup(match_expressions, "key", null)
+                    operator = lookup(match_expressions, "operator", null)
+                    values = lookup(match_expressions, "values", null)
+                  }
+                }
+                match_labels = lookup(namespace_selector, "match_labels", {})
+              }
+            }
+            dynamic "pod_selector" {
+              for_each = lookup(from, "pod_selector", {})
+              content {
+                dynamic "match_expressions" {
+                  for_each = lookup(pod_selector, "match_expressions", {})
+                  content {
+                    key = lookup(match_expressions, "key", null)
+                    operator = lookup(match_expressions, "operator", null)
+                    values = lookup(match_expressions, "values", null)
+                  }
+                }
+                match_labels = lookup(pod_selector, "match_labels")
+              }
+            }
+          }  
+        }
+        dynamic "ports" {
+          for_each = lookup(ingress, "ports", {})
+          content {
+            port =  lookup(ports, "port", null)
+            protocol = lookup(ports, "protocol", null)
+          }
+        }
+      }
+    }
 
-    pod_selector {}
-      # dynamic "match_expressions" {
-      #   for_each = each.value["pod_selector"]["match_expressions"]
-      #   content {
-      #     key      = each.value["key"]
-      #     operator = each.value["operator"]
-      #     values   = each.value["values"]
-      #   }
-      # }
-      # dynamic "match_labels" {
-      #   for_each = each.value["pod_selector"]["match_labels"]
-      #   content {
-      #     key      = each.value["key"]
-      #     operator = each.value["operator"]
-      #     values   = each.value["values"]
-      #   }
+    dynamic "pod_selector" {
+      for_each = lookup(each.value, "pod_selector", {})
+      content {
+        dynamic "match_expressions" {
+          for_each = lookup(pod_selector, "match_expressions", {})
+          content {
+            key = lookup(match_expressions, "key", null)
+            operator = lookup(match_expressions, "operator", null)
+            values = lookup(match_expressions, "values", null)
+          }
+        }
+        match_labels = lookup(pod_selector, "match_labels", {})
+      }
+    }
 
-    policy_types = each.value["policy_types"]
+    policy_types = lookup(each.value, "policy_types", [])
   }
 }
 

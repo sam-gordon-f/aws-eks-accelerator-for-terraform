@@ -39,6 +39,7 @@ eks_cluster = {
 eks_compute = {
   nodegroups = {
     aws_managed  = {
+        # example for a managed eks nodegroup (3AZ - 3 x m5.large) 
       mg_4 = {
         node_group_name = "managed-ondemand"
         instance_types  = ["m5.large"]
@@ -52,11 +53,25 @@ eks_compute = {
     self_managed = {}
   }
   fargate_profiles = {
-    default = {
-      additional_tags = {}
-      fargate_profile_name = "default"
+      # required for when compute is fully serverless (allows "core" services to run)
+    kubesystem = {
+      fargate_profile_name = "kube-system"
       fargate_profile_namespaces = [{
-        namespace = "default"
+        namespace = "kube-system"
+        k8s_labels = {}
+      }]
+      subnet_ids = [
+        "subnet-058c6d2c63ef6dbd7",
+        "subnet-029d9418d5be4ad2b",
+        "subnet-0f4fdef51814b866a"
+      ]
+    }
+      # example of a fargate profile
+    profile1 = {
+      additional_tags = {}
+      fargate_profile_name = "profile1"
+      fargate_profile_namespaces = [{
+        namespace = "profile1"
         k8s_labels = {
           Environment = "preprod"
           Zone        = "dev"
@@ -74,7 +89,7 @@ eks_compute = {
 
 eks_addons = {
   amazon_eks_aws_ebs_csi_driver = {
-    enable = true
+    enable = false
   }
   amazon_eks_vpc_cni = {
     enable = true
@@ -89,14 +104,17 @@ eks_addons = {
     enable = true,
     applications = {
       addons = {
-        path                = "chart"
-        repo_url            = "https://github.com/aws-samples/eks-blueprints-add-ons.git"
         add_on_application  = true
           # the below is a secretsmanager:secret reference for accessing private repositories 
         # admin_password_secret_name = "password"
+        path                = "chart"
+        repo_url            = "https://github.com/aws-samples/eks-blueprints-add-ons.git"  
       }
     }
     argocd_manage_add_ons = true
+  }
+  aws_cloudwatch_metrics = {
+    enable = true
   }
   aws_efs_csi_driver = {
     enable = false
@@ -127,9 +145,15 @@ eks_teams = {
     }
     network_policies = {
       policy1 = {
+        ingress = [{}]
+        egress = [{}]
+        pod_selector = [{}]
         policy_types = ["Ingress"]
       },
       policy2 = {
+        ingress = [{}]
+        egress = [{}]
+        pod_selector = [{}]
         policy_types = ["Egress"]
       }
     }
@@ -153,12 +177,29 @@ eks_teams = {
     }
     network_policies = {
       policy1 = {
+        ingress = [{
+          from = [{
+            namespace_selector = [{
+              match_labels = {
+                "team" = "operations"
+              }
+            }]
+          }]
+        }]
+        egress = [{}]
+        pod_selector = [{}]
         policy_types = ["Ingress"]
       }
       policy2 = {
+        ingress = [{}]
+        egress = [{}]
+        pod_selector = [{}]
         policy_types = ["Egress"]
       }
       policy3 = {
+        ingress = [{}]
+        egress = [{}]
+        pod_selector = [{}]
         policy_types = ["Egress"]
       }
     }

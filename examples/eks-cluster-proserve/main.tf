@@ -10,11 +10,11 @@ module "eks_cluster" {
   cluster_security_group_additional_rules = var.eks_cluster.cluster_security_group_additional_rules
   cluster_version                         = var.eks_cluster.cluster_version
   create_eks                              = true
-    # combination of what the customer provides and what the proserve wrapper adds
+    # merge of configuration provided and wrapper provided
   fargate_profiles                        = local.eks_cluster.compute.fargate_profiles
-    # combination of what the customer provides and what the proserve wrapper adds
+    # merge of configuration provided and wrapper provided
   managed_node_groups                     = local.eks_cluster.compute.nodegroups.aws_managed
-    # combination of what the customer provides and what the proserve wrapper adds
+    # merge of configuration provided and wrapper provided
   map_roles                               = local.eks_cluster.map_roles
   private_subnet_ids                      = var.eks_cluster.vpc.subnets
   tags                                    = var.general.tags
@@ -24,7 +24,7 @@ module "eks_cluster" {
 
 ####
 # b. deploy all "non-gitops" applications to the cluster
-# in the argocd index, there is a pointer to the repo that contains all the "apps" to add
+# if argocd enabled - specify the repo in `var.argocd_applications`
 ####
 
 module "eks_cluster_addons" {
@@ -32,6 +32,10 @@ module "eks_cluster_addons" {
 
   eks_cluster_id                        = module.eks_cluster.eks_cluster_id
   
+    # aws-ebs-csi-driver - provides an interface for container orchestrators to interact with ebs
+    # https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+  enable_amazon_eks_aws_ebs_csi_driver             = var.eks_addons.amazon_eks_aws_ebs_csi_driver.enable
+
     # core-dns - deploys a dns server to serve your cluster
     # https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html
   enable_amazon_eks_coredns             = var.eks_addons.amazon_eks_coredns.enable
@@ -53,6 +57,11 @@ module "eks_cluster_addons" {
     # aws-efs-csi-driver - provides an interface for container orchestrators to interact with efs
     # https://github.com/kubernetes-sigs/aws-efs-csi-driver
   enable_aws_efs_csi_driver             = var.eks_addons.aws_efs_csi_driver.enable
+
+    # aws-clouwatch-metrics - collects, aggregates, and summarizes metrics and logs from your containerized applications and microservices
+    # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
+    # @TODO - not supported in current release version, need to update to be able to consume
+  #enable_aws_cloudwatch_metrics             = var.eks_addons.enable_aws_cloudwatch_metrics.enable
   
     # aws load balancer controller - addon for allowing eks cluster to manage aws alb/nlbs
     # https://github.com/kubernetes-sigs/aws-load-balancer-controller
@@ -66,6 +75,7 @@ module "eks_cluster_addons" {
     # https://github.com/kubernetes-sigs/metrics-server
   enable_metrics_server                 = var.eks_addons.metrics_server.enable
   
+    # ensure that `addons` are added after cluster is available
   depends_on = [
     module.eks_cluster.managed_node_groups
   ]
@@ -86,7 +96,9 @@ module "eks_cluster_teams" {
   eks_teams        = var.eks_teams
   general          = var.general
 
+    # ensure that `team` configurations are added after cluster and addons are available
   depends_on = [
-    module.eks_cluster
+    module.eks_cluster.managed_node_groups,
+    module.eks_cluster_addons
   ]
 }
