@@ -1,24 +1,6 @@
-/*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: MIT-0
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this
- * software and associated documentation files (the "Software"), to deal in the Software
- * without restriction, including without limitation the rights to use, copy, modify,
- * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 variable "helm_config" {
   type        = any
-  description = "Cert Manager Helm chart configuration"
+  description = "cert-manager Helm chart configuration"
   default     = {}
 }
 
@@ -26,4 +8,44 @@ variable "manage_via_gitops" {
   type        = bool
   default     = false
   description = "Determines if the add-on should be managed via GitOps."
+}
+
+variable "irsa_policies" {
+  type        = list(string)
+  default     = []
+  description = "Additional IAM policies used for the add-on service account."
+}
+
+variable "domain_names" {
+  type        = list(string)
+  default     = []
+  description = "Domain names of the Route53 hosted zone to use with cert-manager."
+}
+
+variable "install_letsencrypt_issuers" {
+  type        = bool
+  default     = true
+  description = "Install Let's Encrypt Cluster Issuers."
+}
+
+variable "letsencrypt_email" {
+  type        = string
+  default     = ""
+  description = "Email address for expiration emails from Let's Encrypt."
+}
+
+variable "addon_context" {
+  type = object({
+    aws_caller_identity_account_id = string
+    aws_caller_identity_arn        = string
+    aws_eks_cluster_endpoint       = string
+    aws_partition_id               = string
+    aws_region_name                = string
+    eks_cluster_id                 = string
+    eks_oidc_issuer_url            = string
+    eks_oidc_provider_arn          = string
+    tags                           = map(string)
+    irsa_iam_role_path             = string
+  })
+  description = "Input configuration for the addon"
 }

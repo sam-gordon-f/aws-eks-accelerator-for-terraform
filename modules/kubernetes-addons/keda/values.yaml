@@ -1,6 +1,3 @@
-serviceAccount:
-  name: ${keda-sa-name}
-
 resources:
   limits:
     cpu: 1

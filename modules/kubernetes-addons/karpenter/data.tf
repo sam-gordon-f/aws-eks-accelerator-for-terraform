@@ -1,9 +1,3 @@
-data "aws_region" "current" {}
-
-data "aws_eks_cluster" "eks" {
-  name = var.eks_cluster_id
-}
-
 data "aws_iam_policy_document" "karpenter" {
   statement {
     sid       = "Karpenter"
@@ -16,6 +10,7 @@ data "aws_iam_policy_document" "karpenter" {
       "ec2:RunInstances",
       "ec2:CreateTags",
       "iam:PassRole",
+      "ec2:DeleteLaunchTemplate",
       "ec2:DescribeLaunchTemplates",
       "ec2:DescribeInstances",
       "ec2:DescribeSecurityGroups",

@@ -5,7 +5,7 @@ For complete project documentation, please visit the [Spark K8S Operator documen
 
 ## Usage
 
-[Spark K8S Operator](https://github.com/aws-samples/aws-eks-accelerator-for-terraform/tree/main/modules/kubernetes-addons/spark-k8s-operator) can be deployed by enabling the add-on via the following.
+[Spark K8S Operator](https://github.com/aws-ia/terraform-aws-eks-blueprints/tree/main/modules/kubernetes-addons/spark-k8s-operator) can be deployed by enabling the add-on via the following.
 
 ### Basic Example
 
@@ -22,7 +22,7 @@ For complete project documentation, please visit the [Spark K8S Operator documen
     name             = "spark-operator"
     chart            = "spark-operator"
     repository       = "https://googlecloudplatform.github.io/spark-on-k8s-operator"
-    version          = "1.1.6"
+    version          = "1.1.19"
     namespace        = "spark-k8s-operator"
     timeout          = "1200"
     create_namespace = true

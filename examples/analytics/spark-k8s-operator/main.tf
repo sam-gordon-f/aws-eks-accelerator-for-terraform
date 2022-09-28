@@ -1,49 +1,44 @@
-provider "aws" {}
+provider "aws" {
+  region = local.region
+}
 
 provider "kubernetes" {
-  experiments {
-    manifest_resource = true
+  host                   = module.eks_blueprints.eks_cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_blueprints.eks_cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1alpha1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks_blueprints.eks_cluster_id]
   }
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
 }
 
 provider "helm" {
   kubernetes {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    token                  = data.aws_eks_cluster_auth.cluster.token
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+    host                   = module.eks_blueprints.eks_cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks_blueprints.eks_cluster_certificate_authority_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1alpha1"
+      command     = "aws"
+      # This requires the awscli to be installed locally where Terraform is executed
+      args = ["eks", "get-token", "--cluster-name", module.eks_blueprints.eks_cluster_id]
+    }
   }
 }
-
-data "aws_region" "current" {}
 
 data "aws_availability_zones" "available" {}
 
-data "aws_eks_cluster" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.aws-eks-accelerator-for-terraform.eks_cluster_id
-}
-
-terraform {
-  backend "local" {
-    path = "local_tf_state/terraform-main.tfstate"
-  }
-}
-
 locals {
-  tenant      = "aws001"  # AWS account name or unique id for tenant
-  environment = "preprod" # Environment area eg., preprod or prod
-  zone        = "spark"   # Environment with in one sub_tenant or business unit
-
-  kubernetes_version = "1.21"
+  tenant      = var.tenant      # AWS account name or unique id for tenant
+  environment = var.environment # Environment area eg., preprod or prod
+  zone        = var.zone        # Environment with in one sub_tenant or business unit
+  region      = "us-west-2"
 
   vpc_cidr     = "10.0.0.0/16"
   vpc_name     = join("-", [local.tenant, local.environment, local.zone, "vpc"])
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
   cluster_name = join("-", [local.tenant, local.environment, local.zone, "eks"])
 
   terraform_version = "Terraform v1.0.1"
@@ -51,14 +46,14 @@ locals {
 
 module "aws_vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "v3.2.0"
+  version = "~> 3.0"
 
   name = local.vpc_name
   cidr = local.vpc_cidr
-  azs  = data.aws_availability_zones.available.names
+  azs  = local.azs
 
-  public_subnets  = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k)]
-  private_subnets = [for k, v in slice(data.aws_availability_zones.available.names, 0, 3) : cidrsubnet(local.vpc_cidr, 8, k + 10)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 10)]
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -74,12 +69,12 @@ module "aws_vpc" {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"             = "1"
   }
-
 }
+
 #---------------------------------------------------------------
-# Example to consume aws-eks-accelerator-for-terraform module
+# Example to consume eks_blueprints module
 #---------------------------------------------------------------
-module "aws-eks-accelerator-for-terraform" {
+module "eks_blueprints" {
   source = "../../.."
 
   tenant            = local.tenant
@@ -92,8 +87,46 @@ module "aws-eks-accelerator-for-terraform" {
   private_subnet_ids = module.aws_vpc.private_subnets
 
   # EKS CONTROL PLANE VARIABLES
-  create_eks         = true
-  kubernetes_version = local.kubernetes_version
+  cluster_version = "1.21"
+
+  #----------------------------------------------------------------------------------------------------------#
+  # Security groups used in this module created by the upstream modules terraform-aws-eks (https://github.com/terraform-aws-modules/terraform-aws-eks).
+  #   Upstream module implemented Security groups based on the best practices doc https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html.
+  #   So, by default the security groups are restrictive. Users needs to enable rules for specific ports required for App requirement or Add-ons
+  #   See the notes below for each rule used in these examples
+  #----------------------------------------------------------------------------------------------------------#
+  node_security_group_additional_rules = {
+    # Extend node-to-node security group rules. Recommended and required for the Add-ons
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    }
+    #Recommended outbound traffic for Node groups
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+    # Allows Control Plane Nodes to talk to Worker nodes on all ports. Added this to simplify the example and further avoid issues with Add-ons communication with Control plane.
+    # This can be restricted further to specific port based on the requirement for each Add-on e.g., metrics-server 4443, spark-operator 8080, karpenter 8443 etc.
+    # Change this according to your security requirements if needed
+    ingress_cluster_to_node_all_traffic = {
+      description                   = "Cluster API to Nodegroup all traffic"
+      protocol                      = "-1"
+      from_port                     = 0
+      to_port                       = 0
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  }
 
   # EKS MANAGED NODE GROUPS
   managed_node_groups = {
@@ -109,9 +142,9 @@ module "aws-eks-accelerator-for-terraform" {
   enable_amazon_prometheus = true
 }
 
-module "kubernetes-addons" {
+module "eks_blueprints_kubernetes_addons" {
   source         = "../../../modules/kubernetes-addons"
-  eks_cluster_id = module.aws-eks-accelerator-for-terraform.eks_cluster_id
+  eks_cluster_id = module.eks_blueprints.eks_cluster_id
 
   #K8s Add-ons
   enable_metrics_server     = true
@@ -122,7 +155,7 @@ module "kubernetes-addons" {
   #---------------------------------------
   # Amazon Prometheus Configuration to integrate with Prometheus Server Add-on
   enable_amazon_prometheus             = true
-  amazon_prometheus_workspace_endpoint = module.aws-eks-accelerator-for-terraform.amazon_prometheus_workspace_endpoint
+  amazon_prometheus_workspace_endpoint = module.eks_blueprints.amazon_prometheus_workspace_endpoint
 
   #---------------------------------------
   # COMMUNITY PROMETHEUS ENABLE
@@ -133,8 +166,8 @@ module "kubernetes-addons" {
     name       = "prometheus"                                         # (Required) Release name.
     repository = "https://prometheus-community.github.io/helm-charts" # (Optional) Repository URL where to locate the requested chart.
     chart      = "prometheus"                                         # (Required) Chart name to be installed.
-    version    = "14.4.0"                                             # (Optional) Specify the exact chart version to install. If this is not specified, the latest version is installed.
-    namespace  = "prometheus"                                         # (Optional) The namespace to install the release into. Defaults to default
+    version    = "15.3.0"                                             # (Optional) Specify the exact chart version to install.
+    namespace  = "prometheus"                                         # (Optional) The namespace to install the release into.
     values = [templatefile("${path.module}/helm_values/prometheus-values.yaml", {
       operating_system = "linux"
     })]
@@ -148,8 +181,8 @@ module "kubernetes-addons" {
     name             = "spark-operator"
     chart            = "spark-operator"
     repository       = "https://googlecloudplatform.github.io/spark-on-k8s-operator"
-    version          = "1.1.15"
-    namespace        = "spark-k8s-operator"
+    version          = "1.1.19"
+    namespace        = "spark-operator"
     timeout          = "300"
     create_namespace = true
     values           = [templatefile("${path.module}/helm_values/spark-k8s-operator-values.yaml", {})]
@@ -159,12 +192,12 @@ module "kubernetes-addons" {
   #---------------------------------------
   enable_yunikorn = true
   yunikorn_helm_config = {
-    name       = "yunikorn"                                            # (Required) Release name.
-    repository = "https://apache.github.io/incubator-yunikorn-release" # (Optional) Repository URL where to locate the requested chart.
-    chart      = "yunikorn"                                            # (Required) Chart name to be installed.
-    version    = "0.12.1"                                              # (Optional) Specify the exact chart version to install. If this is not specified, the latest version is installed.
+    name       = "yunikorn"                                  # (Required) Release name.
+    repository = "https://apache.github.io/yunikorn-release" # (Optional) Repository URL where to locate the requested chart.
+    chart      = "yunikorn"                                  # (Required) Chart name to be installed.
+    version    = "0.12.2"                                    # (Optional) Specify the exact chart version to install.
     values     = [templatefile("${path.module}/helm_values/yunikorn-values.yaml", {})]
   }
 
-  depends_on = [module.aws-eks-accelerator-for-terraform.managed_node_groups]
+  depends_on = [module.eks_blueprints.managed_node_groups]
 }

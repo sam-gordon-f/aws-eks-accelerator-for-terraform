@@ -19,9 +19,9 @@ Alternatively, you can override the helm values by using the code snippet below
 
   yunikorn_helm_config = {
     name       = "yunikorn"                                 # (Required) Release name.
-    repository = "https://apache.github.io/incubator-yunikorn-release" # (Optional) Repository URL where to locate the requested chart.
+    repository = "https://apache.github.io/yunikorn-release" # (Optional) Repository URL where to locate the requested chart.
     chart      = "yunikorn"                                 # (Required) Chart name to be installed.
-    version    = "0.12.0"                               # (Optional) Specify the exact chart version to install. If this is not specified, the latest version is installed.
+    version    = "0.12.2"                               # (Optional) Specify the exact chart version to install. If this is not specified, it defaults to the version set within default_helm_config: https://github.com/aws-ia/terraform-aws-eks-blueprints/blob/main/modules/kubernetes-addons/yunikorn/locals.tf
     values     = [templatefile("${path.module}/values.yaml", {})]
   }
 ```
