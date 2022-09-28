@@ -195,6 +195,14 @@ module "metrics_server" {
   addon_context     = local.addon_context
 }
 
+module "newrelic" {
+  count             = var.enable_newrelic ? 1 : 0
+  source            = "./newrelic"
+  helm_config       = var.newrelic_helm_config
+  manage_via_gitops = var.argocd_manage_add_ons
+  addon_context     = local.addon_context
+}
+
 module "ondat" {
   count             = var.enable_ondat ? 1 : 0
   source            = "ondat/ondat-addon/eksblueprints"

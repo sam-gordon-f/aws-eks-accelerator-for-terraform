@@ -275,6 +275,19 @@ variable "metrics_server_helm_config" {
   description = "Metrics Server Helm Chart config"
 }
 
+#-----------NEWRELIC-------------
+variable "enable_newrelic" {
+  type        = bool
+  default     = false
+  description = "Enable new relic add-on"
+}
+
+variable "newrelic_helm_config" {
+  type        = any
+  default     = {}
+  description = "Metrics Server Helm Chart config"
+}
+
 #-----------TETRATE ISTIO-------------
 variable "enable_tetrate_istio" {
   type        = bool
