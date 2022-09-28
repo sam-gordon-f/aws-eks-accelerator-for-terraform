@@ -1,10 +1,10 @@
 resource "helm_release" "addon" {
   count                      = var.manage_via_gitops ? 0 : 1
   name                       = var.helm_config["name"]
-  repository                 = var.helm_config["repository"]
+  repository                 = try(var.helm_config["repository"], null)
   chart                      = var.helm_config["chart"]
-  version                    = var.helm_config["version"]
-  timeout                    = try(var.helm_config["timeout"], 300)
+  version                    = try(var.helm_config["version"], null)
+  timeout                    = try(var.helm_config["timeout"], 1200)
   values                     = try(var.helm_config["values"], null)
   create_namespace           = var.irsa_config != null ? false : try(var.helm_config["create_namespace"], false)
   namespace                  = var.helm_config["namespace"]
@@ -43,6 +43,7 @@ resource "helm_release" "addon" {
     content {
       name  = each_item.value.name
       value = each_item.value.value
+      type  = try(each_item.value.type, null)
     }
   }
 
@@ -53,6 +54,7 @@ resource "helm_release" "addon" {
     content {
       name  = each_item.value.name
       value = each_item.value.value
+      type  = try(each_item.value.type, null)
     }
   }
   depends_on = [module.irsa]
@@ -65,6 +67,11 @@ module "irsa" {
   create_kubernetes_service_account = try(var.irsa_config.create_kubernetes_service_account, true)
   kubernetes_namespace              = var.irsa_config.kubernetes_namespace
   kubernetes_service_account        = var.irsa_config.kubernetes_service_account
+  kubernetes_svc_image_pull_secrets = var.irsa_config.kubernetes_svc_image_pull_secrets
   irsa_iam_policies                 = var.irsa_config.irsa_iam_policies
-  addon_context                     = var.addon_context
+  irsa_iam_role_name                = var.irsa_iam_role_name
+  irsa_iam_role_path                = var.addon_context.irsa_iam_role_path
+  irsa_iam_permissions_boundary     = var.addon_context.irsa_iam_permissions_boundary
+  eks_cluster_id                    = var.addon_context.eks_cluster_id
+  eks_oidc_provider_arn             = var.addon_context.eks_oidc_provider_arn
 }

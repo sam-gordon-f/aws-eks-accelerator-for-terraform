@@ -6,6 +6,7 @@ This example deploys the following
 - Creates a new sample VPC, 3 Private Subnets and 3 Public Subnets
 - Creates Internet gateway for Public Subnets and NAT Gateway for Private Subnets
 - Enables cert-manager module
+- Enables cert-manager CSI driver module
 - Enables aws-privateca-issuer module
 - Creates AWS Certificate Manager Private Certificate Authority, enables and activates it
 - Creates the CRDs to fetch `tls.crt`, `tls.key` and `ca.crt` , which will be available as Kubernetes Secret. Now you may mount the secret in the application for end to end TLS.
@@ -24,15 +25,15 @@ Ensure that you have installed the following tools in your Mac or Windows Laptop
 
 #### Step 1: Clone the repo using the command below
 
-```shell script
-git clone https://github.com/aws-samples/aws-eks-accelerator-for-terraform.git
+```sh
+git clone https://github.com/aws-ia/terraform-aws-eks-blueprints.git
 ```
 
 #### Step 2: Run Terraform INIT
 
 Initialize a working directory with configuration files
 
-```shell script
+```sh
 cd examples/tls-with-aws-pca-issuer/
 terraform init
 ```
@@ -41,20 +42,20 @@ terraform init
 
 Verify the resources created by this execution
 
-```shell script
+```sh
 export AWS_REGION=<ENTER YOUR REGION>   # Select your own region
 terraform plan
 ```
 
 #### Step 4: Finally, Terraform APPLY
 
-to create resources
+**Deploy the pattern**
 
-```shell script
+```sh
 terraform apply
 ```
 
-Enter `yes` to apply
+Enter `yes` to apply.
 
 ### Configure `kubectl` and test cluster
 
@@ -80,11 +81,20 @@ This following command used to update the `kubeconfig` in your local machine whe
 
     $ kubectl get Certificate
 
-## How to Destroy
+## Cleanup
 
-The following command destroys the resources created by `terraform apply`
+To clean up your environment, destroy the Terraform modules in reverse order.
 
-```shell script
-cd examples/tls-with-aws-pca-issuer
-terraform destroy --auto-approve
+Destroy the Kubernetes Add-ons, EKS cluster with Node groups and VPC
+
+```sh
+terraform destroy -target="module.eks_blueprints_kubernetes_addons" -auto-approve
+terraform destroy -target="module.eks_blueprints" -auto-approve
+terraform destroy -target="module.vpc" -auto-approve
+```
+
+Finally, destroy any additional resources that are not in the above modules
+
+```sh
+terraform destroy -auto-approve
 ```

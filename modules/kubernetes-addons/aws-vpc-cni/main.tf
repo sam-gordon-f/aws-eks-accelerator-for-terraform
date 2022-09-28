@@ -8,7 +8,7 @@ resource "aws_eks_addon" "vpc_cni" {
   cluster_name             = var.addon_context.eks_cluster_id
   addon_name               = "vpc-cni"
   addon_version            = try(var.addon_config.addon_version, null)
-  resolve_conflicts        = try(var.addon_config.resolve_conflicts, null)
+  resolve_conflicts        = try(var.addon_config.resolve_conflicts, "OVERWRITE")
   service_account_role_arn = local.create_irsa ? module.irsa_addon[0].irsa_iam_role_arn : try(var.addon_config.service_account_role_arn, null)
   preserve                 = try(var.addon_config.preserve, true)
 
@@ -27,7 +27,10 @@ module "irsa_addon" {
   create_kubernetes_service_account = false
   kubernetes_namespace              = "kube-system"
   kubernetes_service_account        = "aws-node"
-  addon_context                     = var.addon_context
+  irsa_iam_role_path                = var.addon_context.irsa_iam_role_path
+  irsa_iam_permissions_boundary     = var.addon_context.irsa_iam_permissions_boundary
+  eks_cluster_id                    = var.addon_context.eks_cluster_id
+  eks_oidc_provider_arn             = var.addon_context.eks_oidc_provider_arn
   irsa_iam_policies = concat(
     ["arn:${var.addon_context.aws_partition_id}:iam::aws:policy/AmazonEKS_CNI_Policy"],
     local.cni_ipv6_policy,
@@ -56,9 +59,9 @@ data "aws_iam_policy_document" "ipv6_policy" {
     actions = [
       "ec2:AssignIpv6Addresses",
       "ec2:DescribeInstances",
-      "ec2:DescribeTags",
+      "ec2:DescribeInstanceTypes",
       "ec2:DescribeNetworkInterfaces",
-      "ec2:DescribeInstanceTypes"
+      "ec2:DescribeTags",
     ]
     resources = ["*"]
   }

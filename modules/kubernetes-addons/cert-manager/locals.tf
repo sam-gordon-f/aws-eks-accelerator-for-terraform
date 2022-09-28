@@ -6,7 +6,7 @@ locals {
     name        = local.name
     chart       = local.name
     repository  = "https://charts.jetstack.io"
-    version     = "v1.7.1"
+    version     = "v1.9.1"
     namespace   = local.name
     description = "Cert Manager Add-on"
     values      = local.default_helm_values
@@ -19,22 +19,26 @@ locals {
     var.helm_config
   )
 
-  set_values = [
-    {
-      name  = "serviceAccount.name"
-      value = local.service_account_name
-    },
-    {
-      name  = "serviceAccount.create"
-      value = false
-    }
-  ]
+  set_values = concat(
+    [
+      {
+        name  = "serviceAccount.name"
+        value = local.service_account_name
+      },
+      {
+        name  = "serviceAccount.create"
+        value = false
+      }
+    ],
+    try(var.helm_config.set_values, [])
+  )
 
   irsa_config = {
     kubernetes_namespace              = local.helm_config["namespace"]
     kubernetes_service_account        = local.service_account_name
     create_kubernetes_namespace       = try(local.helm_config["create_namespace"], true)
     create_kubernetes_service_account = true
+    kubernetes_svc_image_pull_secrets = var.kubernetes_svc_image_pull_secrets
     irsa_iam_policies                 = concat([aws_iam_policy.cert_manager.arn], var.irsa_policies)
   }
 

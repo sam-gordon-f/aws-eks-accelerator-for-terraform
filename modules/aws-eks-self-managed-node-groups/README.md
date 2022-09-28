@@ -6,7 +6,7 @@ Amazon EKS Self Managed Node Groups lets you create, update, scale, and terminat
 
 This module allows you to create on-demand or spot self managed Linux or Windows nodegroups. You can instantiate the module once with map of node group values to create multiple self managed node groups. By default, the module uses the latest available version of Amazon-provided EKS-optimized AMIs for Amazon Linux 2, Bottlerocket, or Windows 2019 Server Core operating systems. You can override the image via the custom_ami_id input variable.
 
-Checkout the usage docs for Self-managed Node groups [examples](https://aws-ia.github.io/terraform-aws-eks-blueprints/node-groups/)
+Checkout the usage docs for Self-managed Node groups [examples](https://aws-ia.github.io/terraform-aws-eks-blueprints/latest/node-groups/)
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
@@ -46,7 +46,7 @@ Checkout the usage docs for Self-managed Node groups [examples](https://aws-ia.g
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_context"></a> [context](#input\_context) | Input configuration for the Node groups | <pre>object({<br>    # EKS Cluster Config<br>    eks_cluster_id    = string<br>    cluster_ca_base64 = string<br>    cluster_endpoint  = string<br>    cluster_version   = string<br>    # VPC Config<br>    vpc_id             = string<br>    private_subnet_ids = list(string)<br>    public_subnet_ids  = list(string)<br>    # Security Groups<br>    worker_security_group_ids = list(string)<br>    # Http config<br>    http_endpoint               = string<br>    http_tokens                 = string<br>    http_put_response_hop_limit = number<br>    # Data sources<br>    aws_partition_dns_suffix = string<br>    aws_partition_id         = string<br><br>    iam_role_path                 = string<br>    iam_role_permissions_boundary = string<br>    # Tags<br>    tags = map(string)<br>    # Service IPV4/IPV6 CIDR<br>    service_ipv6_cidr = string<br>    service_ipv4_cidr = string<br>  })</pre> | n/a | yes |
+| <a name="input_context"></a> [context](#input\_context) | Input configuration for the Node groups | <pre>object({<br>    # EKS Cluster Config<br>    eks_cluster_id    = string<br>    cluster_ca_base64 = string<br>    cluster_endpoint  = string<br>    cluster_version   = string<br>    # VPC Config<br>    vpc_id             = string<br>    private_subnet_ids = list(string)<br>    public_subnet_ids  = list(string)<br>    # Security Groups<br>    worker_security_group_ids = list(string)<br>    # Data sources<br>    aws_partition_dns_suffix = string<br>    aws_partition_id         = string<br><br>    iam_role_path                 = string<br>    iam_role_permissions_boundary = string<br>    # Tags<br>    tags = map(string)<br>    # Service IPV4/IPV6 CIDR<br>    service_ipv6_cidr = string<br>    service_ipv4_cidr = string<br>  })</pre> | n/a | yes |
 | <a name="input_self_managed_ng"></a> [self\_managed\_ng](#input\_self\_managed\_ng) | Map of maps of `eks_self_managed_node_groups` to create | `any` | `{}` | no |
 
 ## Outputs
