@@ -22,6 +22,7 @@ variable "helm_config" {
 variable "license_key" {
   type        = string
   description = "NewRelic license key"
+  default     = null
 }
 
 variable "manage_via_gitops" {

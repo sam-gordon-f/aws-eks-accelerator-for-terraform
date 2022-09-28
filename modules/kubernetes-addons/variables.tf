@@ -374,6 +374,11 @@ variable "newrelic_helm_config" {
   description = "newrelic Helm Chart config"
 }
 
+variable "newrelic_license_key" {
+  type        = string
+  default     = null
+}
+
 #-----------TETRATE ISTIO-------------
 variable "enable_tetrate_istio" {
   description = "Enable Tetrate Istio add-on"
