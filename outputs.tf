@@ -1,6 +1,11 @@
 #-------------------------------
 # EKS Cluster Module Outputs
 #-------------------------------
+output "eks_cluster_arn" {
+  description = "Amazon EKS Cluster Name"
+  value       = module.aws_eks.cluster_arn
+}
+
 output "eks_cluster_id" {
   description = "Amazon EKS Cluster Name"
   value       = module.aws_eks.cluster_id
@@ -39,6 +44,11 @@ output "configure_kubectl" {
 output "eks_cluster_status" {
   description = "Amazon EKS Cluster Status"
   value       = module.aws_eks.cluster_status
+}
+
+output "eks_cluster_version" {
+  description = "The Kubernetes version for the cluster"
+  value       = module.aws_eks.cluster_version
 }
 
 #-------------------------------
@@ -158,7 +168,7 @@ output "managed_node_group_aws_auth_config_map" {
 #-------------------------------
 output "fargate_profiles" {
   description = "Outputs from EKS Fargate profiles groups "
-  value       = var.create_eks && length(var.fargate_profiles) > 0 ? module.aws_eks_fargate_profiles.* : []
+  value       = module.aws_eks_fargate_profiles
 }
 
 output "fargate_profiles_iam_role_arns" {
@@ -168,7 +178,7 @@ output "fargate_profiles_iam_role_arns" {
 
 output "fargate_profiles_aws_auth_config_map" {
   description = "Fargate profiles AWS auth map"
-  value       = local.fargate_profiles_aws_auth_config_map.*
+  value       = local.fargate_profiles_aws_auth_config_map
 }
 
 #-------------------------------
@@ -190,17 +200,4 @@ output "emr_on_eks_role_id" {
 output "teams" {
   description = "Outputs from EKS Fargate profiles groups "
   value       = var.create_eks && (length(var.platform_teams) > 0 || length(var.application_teams) > 0) ? module.aws_eks_teams.* : []
-}
-
-#-------------------------------
-# Amazon Prometheus WorkSpace Outputs
-#-------------------------------
-output "amazon_prometheus_workspace_endpoint" {
-  description = "Amazon Managed Prometheus Workspace Endpoint"
-  value       = var.create_eks && var.enable_amazon_prometheus ? module.aws_managed_prometheus[0].amazon_prometheus_workspace_endpoint : null
-}
-
-output "amazon_prometheus_workspace_id" {
-  description = "Amazon Managed Prometheus Workspace ID"
-  value       = var.create_eks && var.enable_amazon_prometheus ? module.aws_managed_prometheus[0].amazon_prometheus_workspace_id : null
 }

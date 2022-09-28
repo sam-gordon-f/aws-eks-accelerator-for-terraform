@@ -4,11 +4,11 @@ This example deploys the following Basic EKS Cluster with VPC
 
 - Creates a new sample VPC, 3 Private Subnets and 3 Public Subnets
 - Creates Internet gateway for Public Subnets and NAT Gateway for Private Subnets
-- Creates EKS Cluster Control plane with one managed node group and fargate profile
+- Creates EKS Cluster Control plane with one managed node group
 
 ## How to Deploy
 
-### Prerequisites:
+### Prerequisites
 
 Ensure that you have installed the following tools in your Mac or Windows Laptop before start working with this module and run Terraform Plan and Apply
 
@@ -16,11 +16,18 @@ Ensure that you have installed the following tools in your Mac or Windows Laptop
 2. [Kubectl](https://Kubernetes.io/docs/tasks/tools/)
 3. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
 
+### Minimum IAM Policy
+
+> **Note**: The policy resource is set as `*` to allow all resources, this is not a recommended practice.
+
+You can find the policy [here](min-iam-policy.json)
+
+
 ### Deployment Steps
 
 #### Step 1: Clone the repo using the command below
 
-```shell script
+```sh
 git clone https://github.com/aws-ia/terraform-aws-eks-blueprints.git
 ```
 
@@ -28,7 +35,7 @@ git clone https://github.com/aws-ia/terraform-aws-eks-blueprints.git
 
 Initialize a working directory with configuration files
 
-```shell script
+```sh
 cd examples/eks-cluster-with-new-vpc/
 terraform init
 ```
@@ -37,20 +44,20 @@ terraform init
 
 Verify the resources created by this execution
 
-```shell script
+```sh
 export AWS_REGION=<ENTER YOUR REGION>   # Select your own region
 terraform plan
 ```
 
 #### Step 4: Finally, Terraform APPLY
 
-to create resources
+**Deploy the pattern**
 
-```shell script
+```sh
 terraform apply
 ```
 
-Enter `yes` to apply
+Enter `yes` to apply.
 
 ### Configure `kubectl` and test cluster
 
@@ -61,21 +68,30 @@ This following command used to update the `kubeconfig` in your local machine whe
 
 `~/.kube/config` file gets updated with cluster details and certificate from the below command
 
-    $ aws eks --region <enter-your-region> update-kubeconfig --name <cluster-name>
+    aws eks --region <enter-your-region> update-kubeconfig --name <cluster-name>
 
 #### Step 6: List all the worker nodes by running the command below
 
-    $ kubectl get nodes
+    kubectl get nodes
 
 #### Step 7: List all the pods running in `kube-system` namespace
 
-    $ kubectl get pods -n kube-system
+    kubectl get pods -n kube-system
 
-## How to Destroy
+## Cleanup
 
-The following command destroys the resources created by `terraform apply`
+To clean up your environment, destroy the Terraform modules in reverse order.
 
-```shell script
-cd examples/eks-cluster-with-new-vpc
-terraform destroy --auto-approve
+Destroy the Kubernetes Add-ons, EKS cluster with Node groups and VPC
+
+```sh
+terraform destroy -target="module.eks_blueprints_kubernetes_addons" -auto-approve
+terraform destroy -target="module.eks_blueprints" -auto-approve
+terraform destroy -target="module.vpc" -auto-approve
+```
+
+Finally, destroy any additional resources that are not in the above modules
+
+```sh
+terraform destroy -auto-approve
 ```
