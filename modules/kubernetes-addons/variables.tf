@@ -285,7 +285,7 @@ variable "enable_newrelic" {
 variable "newrelic_helm_config" {
   type        = any
   default     = {}
-  description = "Metrics Server Helm Chart config"
+  description = "newrelic Helm Chart config"
 }
 
 #-----------TETRATE ISTIO-------------
