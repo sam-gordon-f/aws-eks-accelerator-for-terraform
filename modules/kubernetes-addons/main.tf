@@ -283,7 +283,7 @@ module "newrelic" {
   helm_config           = var.newrelic_helm_config
   manage_via_gitops     = var.argocd_manage_add_ons
   addon_context         = local.addon_context
-  newrelic_license_key  = var.newrelic_license_key
+  license_key  = var.newrelic_license_key
 }
 
 module "ondat" {
