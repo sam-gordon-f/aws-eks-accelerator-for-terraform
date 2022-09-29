@@ -1,22 +1,17 @@
+# see https://github.com/newrelic/helm-charts/blob/8c9904ee1eb593bbb379cada1ebc3f83847ba6b5/charts/nri-bundle/values.yaml
+# for details on chart values
 global:
   licenseKey: ${licenseKey}
   cluster: ${cluster}
 
 prometheus:
-  # Automatically scrape prometheus metrics for annotated services in the cluster
-  # Collecting prometheus metrics for large clusters might impact data usage significantly
   enabled: true
-  lowDataMode: true  # Skip ingesting cluster-level metrics
+  lowDataMode: true
 webhook:
-  # Deploy our webhook to link APM and Kubernetes entities
   enabled: true
 kubeEvents:
-  # Report Kubernetes events
   enabled: true
 logging:
-  # Report logs for containers running in the cluster
   enabled: true
 ksm:
-  # Deploy kube-state-metrics in the cluster.
-  # Set this to true unless it is already deployed.
   enabled: true

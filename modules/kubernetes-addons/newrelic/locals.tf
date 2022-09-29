@@ -3,7 +3,7 @@ locals {
 
   default_helm_config = {
     name        = local.name
-    chart       = local.name
+    chart       = "nri-bundle"
     repository  = "https://helm-charts.newrelic.com"
     version     = "4.8.10"
     namespace   = local.name
