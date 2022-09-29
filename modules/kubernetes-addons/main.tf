@@ -279,7 +279,7 @@ module "metrics_server" {
 
 module "newrelic" {
   count                 = var.enable_newrelic ? 1 : 0
-  source                = "./newrelic"
+  source                = "./newrelic-nri-bundle"
   helm_config           = var.newrelic_helm_config
   manage_via_gitops     = var.argocd_manage_add_ons
   addon_context         = local.addon_context
