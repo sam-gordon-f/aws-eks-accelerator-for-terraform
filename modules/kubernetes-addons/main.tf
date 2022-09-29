@@ -277,13 +277,13 @@ module "metrics_server" {
   addon_context     = local.addon_context
 }
 
-module "newrelic" {
-  count                 = var.enable_newrelic ? 1 : 0
+module "newrelic_nri_bundle" {
+  count                 = var.enable_newrelic_nri_bundle ? 1 : 0
   source                = "./newrelic-nri-bundle"
   helm_config           = var.newrelic_helm_config
   manage_via_gitops     = var.argocd_manage_add_ons
   addon_context         = local.addon_context
-  license_key  = var.newrelic_license_key
+  license_key           = var.newrelic_license_key
 }
 
 module "ondat" {

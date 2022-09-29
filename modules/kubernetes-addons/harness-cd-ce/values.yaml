@@ -1,0 +1,17 @@
+# see https://github.com/newrelic/helm-charts/blob/8c9904ee1eb593bbb379cada1ebc3f83847ba6b5/charts/nri-bundle/values.yaml
+# for details on chart values
+global:
+  licenseKey: ${licenseKey}
+  cluster: ${cluster}
+
+prometheus:
+  enabled: true
+  lowDataMode: true
+webhook:
+  enabled: true
+kubeEvents:
+  enabled: true
+logging:
+  enabled: true
+ksm:
+  enabled: true

@@ -362,10 +362,10 @@ variable "metrics_server_helm_config" {
 }
 
 #-----------NEWRELIC-------------
-variable "enable_newrelic" {
+variable "enable_newrelic_nri_bundle" {
   type        = bool
   default     = false
-  description = "Enable new relic add-on"
+  description = "Enable new relic nri bundle add-on"
 }
 
 variable "newrelic_helm_config" {
