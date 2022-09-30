@@ -4,17 +4,16 @@ locals {
   default_helm_config = {
     name        = local.name
     chart       = "harness"
-    repository  = "https://helm-charts.newrelic.com"
-    version     = "4.8.10"
+    repository  = "https://github.com/harness/harness-cd-community/tree/main/helm"
+    version     = ""
     namespace   = local.name
-    description = "New Relic"
+    description = "Harness CD - community edition"
     values      = local.default_helm_values
     timeout     = "1200"
   }
 
   default_helm_values = [templatefile("${path.module}/values.yaml", {
-    licenseKey  = var.license_key
-    cluster     = var.addon_context.eks_cluster_id
+
   })]
 
   helm_config = merge(

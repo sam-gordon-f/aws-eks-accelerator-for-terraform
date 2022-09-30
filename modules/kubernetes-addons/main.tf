@@ -234,6 +234,14 @@ module "grafana" {
   addon_context     = local.addon_context
 }
 
+module "harness_cd_ce" {
+  count                 = var.enable_hardness_cd_ce ? 1 : 0
+  source                = "./harness_cd_ce"
+  helm_config           = var.harness_cd_ce_helm_config
+  manage_via_gitops     = var.argocd_manage_add_ons
+  addon_context         = local.addon_context
+}
+
 module "ingress_nginx" {
   count             = var.enable_ingress_nginx ? 1 : 0
   source            = "./ingress-nginx"

@@ -1225,6 +1225,18 @@ variable "gatekeeper_helm_config" {
   default     = {}
 }
 
+#-----------Harness CD CE-------------
+variable "enable_hardness_cd_ce" {
+  description = "Enable harness_cd community edition add-on"
+  type        = bool
+  default     = false
+}
+
+variable "harness_cd_ce_helm_config" {
+  description = "harness_cd community edition Helm Chart config"
+  type        = any
+  default     = {}
+}
 
 #-----------Local volume provisioner ADDON-------------
 variable "enable_local_volume_provisioner" {
