@@ -1225,7 +1225,7 @@ variable "gatekeeper_helm_config" {
   default     = {}
 }
 
-#-----------Harness CD CE-------------
+#-----------Harness CD Community edition-------------
 variable "enable_hardness_cd_ce" {
   description = "Enable harness_cd community edition add-on"
   type        = bool
