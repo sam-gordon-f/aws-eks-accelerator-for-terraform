@@ -3,7 +3,7 @@ locals {
 
   default_helm_config = {
     name        = local.name
-    repository  = "https://github.com/harness/harness-cd-community/tree/main/helm/harness"
+    chart       = "https://github.com/harness/harness-cd-community/blob/main/helm/harness/Chart.yaml"
     namespace   = local.name
     description = "Harness CD - community edition"
     values      = local.default_helm_values
