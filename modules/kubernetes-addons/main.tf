@@ -236,7 +236,7 @@ module "grafana" {
 
 module "harness" {
   count                 = var.enable_harness ? 1 : 0
-  source                = "./harness"
+  source                = "./harness-self-managed"
   helm_config           = var.harness_helm_config
   manage_via_gitops     = var.argocd_manage_add_ons
   addon_context         = local.addon_context

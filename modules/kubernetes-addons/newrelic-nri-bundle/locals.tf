@@ -26,3 +26,9 @@ locals {
     enable = true
   }
 }
+
+var.helm_config = {
+  values = {
+    
+  }
+}

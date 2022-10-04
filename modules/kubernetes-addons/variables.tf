@@ -368,13 +368,13 @@ variable "enable_newrelic_nri_bundle" {
   description = "Enable new relic nri bundle add-on"
 }
 
-variable "newrelic_helm_config" {
+variable "newrelic_nri_bundle_helm_config" {
   type        = any
   default     = {}
   description = "newrelic Helm Chart config"
 }
 
-variable "newrelic_license_key" {
+variable "newrelic_nri_bundle_license_key" {
   type        = string
   default     = null
 }

@@ -1,3 +1,4 @@
+# https://docs.harness.io/article/6tblwmh830-install-harness-self-managed-enterprise-edition-using-helm-ga
 locals {
   name         = "harness"
 
@@ -7,7 +8,7 @@ locals {
     repository  = "https://harness.github.io/helm-charts"
     version     = "0.2.54"
     namespace   = local.name
-    description = "Harness"
+    description = "Harness - self managed version"
     values      = local.default_helm_values
     timeout     = "1200"
   }

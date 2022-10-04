@@ -5,13 +5,13 @@ global:
   cluster: ${cluster}
 
 prometheus:
-  enabled: true
+  enabled: false
   lowDataMode: true
 webhook:
-  enabled: true
+  enabled: false
 kubeEvents:
-  enabled: true
+  enabled: false
 logging:
-  enabled: true
+  enabled: false
 ksm:
-  enabled: true
+  enabled: false
